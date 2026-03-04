@@ -492,8 +492,8 @@ echo "  ${COMPOSE_HINT} run --rm openclaw-cli channels add --channel discord --t
 echo "Docs: https://docs.openclaw.ai/channels"
 
 echo ""
-echo "==> Starting gateway"
-docker compose "${COMPOSE_ARGS[@]}" up -d openclaw-gateway
+echo "==> Starting gateway (Docker profile docker-gateway; do not run when systemd is primary — port 18789)"
+docker compose "${COMPOSE_ARGS[@]}" --profile docker-gateway up -d openclaw-gateway
 
 # --- Sandbox setup (opt-in via OPENCLAW_SANDBOX=1) ---
 if [[ -n "$SANDBOX_ENABLED" ]]; then
@@ -575,7 +575,7 @@ if [[ -n "$SANDBOX_ENABLED" ]]; then
     echo "Sandbox enabled: mode=non-main, scope=agent, workspaceAccess=none"
     echo "Docs: https://docs.openclaw.ai/gateway/sandboxing"
     # Restart gateway with sandbox compose overlay to pick up socket mount + config.
-    docker compose "${COMPOSE_ARGS[@]}" up -d openclaw-gateway
+    docker compose "${COMPOSE_ARGS[@]}" --profile docker-gateway up -d openclaw-gateway
   else
     echo "WARNING: Sandbox config was partially applied. Check errors above." >&2
     echo "  Skipping gateway restart to avoid exposing Docker socket without a full sandbox policy." >&2
@@ -589,7 +589,7 @@ if [[ -n "$SANDBOX_ENABLED" ]]; then
       rm -f "$SANDBOX_COMPOSE_FILE"
     fi
     # Ensure gateway service definition is reset without sandbox overlay mount.
-    docker compose "${BASE_COMPOSE_ARGS[@]}" up -d --force-recreate openclaw-gateway
+    docker compose "${BASE_COMPOSE_ARGS[@]}" --profile docker-gateway up -d --force-recreate openclaw-gateway
   fi
 else
   # Keep reruns deterministic: if sandbox is not active for this run, reset
