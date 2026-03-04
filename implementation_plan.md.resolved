@@ -1,0 +1,44 @@
+# Implementation Plan: GitOps Agent 🐙
+
+เป้าหมายคือการสร้าง Agent สำหรับดูแลและรันคำสั่งเกี่ยวกับ GitHub Repository ของโปรเจกต์ (pull, status, diff, check update) โดยออกแบบให้มี **ต้นทุนการรันที่ถูกที่สุด (Economical)** ตามกฎของ OpenClaw (`/create-agent`)
+
+## User Review Required
+> [!IMPORTANT]
+> โปรดตรวจสอบสเปกของ Agent นี้:
+> - **ID**: `git-ops`
+> - **Model**: `openrouter/google/gemini-2.0-flash-lite` (ประหยัดสุด)
+> - **Fallback**: `openrouter/google/gemini-2.5-flash`
+> - **หน้าที่**: ตรวจสอบ Git Status, Fetch ดูว่ามี Update จากต้นทางไหม
+> - **รอบเวลาทำงาน (Heartbeat)**: ทุก 6 ชั่วโมง (หรือตามที่คุณต้องการ)
+
+หากเห็นด้วย ผมจะดำเนินการสร้าง Workspace, Config และรัน CLI เพื่อ Register ทันทีครับ
+
+## Proposed Changes
+
+### 1. `openclaw.json` (System Config)
+#### [MODIFY] `~/.openclaw/openclaw.json`
+- เพิ่ม `git-ops` ลงใน `agents.list`
+- กำหนด sandbox เป็น `off` และกำหนดสิทธิ์ tools ให้มีแค่ [read](file:///home/teaingtit/projects/openclaw/src/config/io.ts#1047-1048), [write](file:///home/teaingtit/projects/openclaw/src/config/io.ts#1383-1400), `exec`, `sessions_send`, `sessions_list`
+
+### 2. Workspace Files
+สร้างและอัปเดตไฟล์ในโฟลเดอร์ `~/.openclaw/workspace-git-ops/` ให้ครบทั้ง 7 ไฟล์:
+- [SOUL.md](file:///home/teaingtit/.openclaw/workspace-main/SOUL.md): กำหนดบุคลิกให้เป็นนักพัฒนาประหยัดคำพูด เน้นตรวจสอบการเปลี่ยนแปลงของ Git
+- [AGENTS.md](file:///home/teaingtit/projects/openclaw/AGENTS.md): ลำดับการทำงาน (Boot Sequence)
+- [TOOLS.md](file:///home/teaingtit/.openclaw/workspace-father/TOOLS.md): ขอบเขตเครื่องมือ (เน้นคำสั่ง `git fetch`, `git status`, `git pull`, `gh pr list`)
+- [USER.md](file:///home/teaingtit/.openclaw/workspace-father/USER.md): ข้อมูลโปรเจกต์
+- [IDENTITY.md](file:///home/teaingtit/.openclaw/workspace-father/IDENTITY.md), [HEARTBEAT.md](file:///home/teaingtit/.openclaw/workspace-father/HEARTBEAT.md), [CURRENT_STATE.md](file:///home/teaingtit/.openclaw/workspace-father/CURRENT_STATE.md)
+- `memory/` Directory
+
+### 3. Agent Registration
+- รัน `pnpm openclaw agents add git-ops` (สำหรับสร้าง Auth Profile)
+- รัน `pnpm openclaw agents set-identity`
+
+### 4. [ANTIGRAVITY.md](file:///home/teaingtit/projects/openclaw/ANTIGRAVITY.md) ซิงค์ตั้งค่า
+#### [MODIFY] `~/projects/openclaw/ANTIGRAVITY.md`
+เพิ่ม `git-ops` ลงในสารบบ Agent ของโปรเจกต์
+
+## Verification Plan
+1. ตรวจสอบว่ามี Auth Profile ถูกสร้างใน `~/.openclaw/agents/git-ops/`
+2. ลองให้ `git-ops` รัน `git status` ด้วยคำสั่ง:
+   `pnpm openclaw agent --agent git-ops --message "Check git status"`
+3. ระบบไม่ crash ตอน Gateway restart
