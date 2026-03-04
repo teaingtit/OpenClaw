@@ -44,13 +44,14 @@ Full troubleshooting: [/channels/whatsapp#troubleshooting](/channels/whatsapp#tr
 
 ### Telegram failure signatures
 
-| Symptom                             | Fastest check                                   | Fix                                                                         |
-| ----------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------- |
-| `/start` but no usable reply flow   | `openclaw pairing list telegram`                | Approve pairing or change DM policy.                                        |
-| Bot online but group stays silent   | Verify mention requirement and bot privacy mode | Disable privacy mode for group visibility or mention bot.                   |
-| Send failures with network errors   | Inspect logs for Telegram API call failures     | Fix DNS/IPv6/proxy routing to `api.telegram.org`.                           |
-| `setMyCommands` rejected at startup | Inspect logs for `BOT_COMMANDS_TOO_MUCH`        | Reduce plugin/skill/custom Telegram commands or disable native menus.       |
-| Upgraded and allowlist blocks you   | `openclaw security audit` and config allowlists | Run `openclaw doctor --fix` or replace `@username` with numeric sender IDs. |
+| Symptom                                | Fastest check                                                       | Fix                                                                                                                                                                                                                                  |
+| -------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| /start but no usable reply flow      | openclaw pairing list telegram                                    | Approve pairing or change DM policy.                                                                                                                                                                                                 |
+| Bot receives message but never replies | openclaw logs --follow for telegram: drop or "Blocked telegram" | See [Telegram audit checklist](/channels/telegram#why-the-bot-might-not-respond-audit-checklist) and [Telegram heartbeat delivery and agent unreachable](/channels/telegram-heartbeat-fix): bindings, allowlists, mention, dmPolicy. |
+| Bot online but group stays silent      | Verify mention requirement and bot privacy mode                     | Disable privacy mode for group visibility or mention bot.                                                                                                                                                                            |
+| Send failures with network errors      | Inspect logs for Telegram API call failures                         | Fix DNS/IPv6/proxy routing to api.telegram.org.                                                                                                                                                                                    |
+| setMyCommands rejected at startup | Inspect logs for BOT_COMMANDS_TOO_MUCH        | Reduce plugin/skill/custom Telegram commands or disable native menus.       |
+| Upgraded and allowlist blocks you      | openclaw security audit and config allowlists                     | Run openclaw doctor --fix or replace @username with numeric sender IDs. |
 
 Full troubleshooting: [/channels/telegram#troubleshooting](/channels/telegram#troubleshooting)
 
@@ -90,7 +91,7 @@ Full troubleshooting: [/channels/slack#troubleshooting](/channels/slack#troubles
 
 Full troubleshooting:
 
-- [/channels/imessage#troubleshooting](/channels/imessage#troubleshooting)
+- [/channels/imessage#troubleshooting](/channels/imessage#troubleshooting) (includes macOS permission/TCC)
 - [/channels/bluebubbles#troubleshooting](/channels/bluebubbles#troubleshooting)
 
 ## Signal
