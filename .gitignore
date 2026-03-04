@@ -121,3 +121,10 @@ dist/protocol.schema.json
 
 # Synthing
 **/.stfolder/
+
+# Private config and runtime (do not commit)
+fly.private.toml
+
+# Logs and caches
+*.log
+.turbo/
