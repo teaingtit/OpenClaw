@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# repo-git: run git in the OpenClaw project repo regardless of cwd.
+# Usage: repo-git <git args...>
+# Example: repo-git push fork main
+exec git -C "/home/teaingtit/projects/openclaw" "$@"
