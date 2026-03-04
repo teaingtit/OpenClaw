@@ -262,11 +262,28 @@
 - **lifecycle:** `non-persistent` — spawned by Mother for periodic security reviews
 - **purpose:** Reads agent SOUL.md files for reconnaissance; writes findings to `knowledge-base/red-team/`; strictly analysis-only — no exec, no sessions_spawn.
 
+### 5.13 GIT-OPS: Git Operations (Fork-Only, No PR)
+
+- **id:** `git-ops`
+- **role:** Git operations specialist — status, fetch, commit, pull (rebase), push to fork only; no PR workflow
+- **workspace:** `~/.openclaw/workspace-git-ops`
+- **sandbox_mode:** `off` (Docker container is isolation boundary)
+- **model_primary:** `openrouter/google/gemini-2.0-flash-lite-001`
+- **model_fallback:** `openrouter/google/gemini-2.5-flash`
+- **model_routing_category:** `8.3 GENERAL_USE_AND_VALUE`
+- **permissions:** [`read`, `write`, `exec`] — no browser, no session tools by default
+- **heartbeat:** none (on-demand only)
+- **lifecycle:** persistent (session can be invoked via Control UI or `openclaw agent --agent git-ops --message "..."`)
+- **push_policy:** Push only to remote `fork` branch `main`; never push to `origin`; refuse any `gh pr *` or PR-related requests
+- **runbook:** See `docs/agents/git-ops-agent.md`; workspace files in repo `agents/workspace-git-ops/`
+
 ## 6. CRITICAL_FILE_MAP
 
 - `~/.openclaw/openclaw.json`: Global settings, agent list, gateway auth
 - `projects/openclaw/.antigravityrules`: Critical operating standards for AI
 - `projects/openclaw/docs/AGENT_DESIGN_GUIDE.md`: Best practices for building AI agents
+- `projects/openclaw/docs/agents/git-ops-agent.md`: Git-ops agent runbook and guardrails (fork-only push, no PR)
+- `projects/openclaw/agents/workspace-git-ops/`: Canonical workspace files for `git-ops` (copy to `~/.openclaw/workspace-git-ops/` after `agents add`)
 - `~/.openclaw`: State directory (Credentials, sessions, agent storage) — volume-mounted into container
 - `projects/openclaw/docker-compose.yml`: Docker service definition
 - `projects/openclaw/docker-compose.override.yml`: Local overrides (--tailscale off, bridge port) — gitignored
@@ -279,7 +296,7 @@
 - **gateway_port:** `18789` (host)
 - **bridge_port:** `18791` (host) → `18790` (container)
 - **ui_allowed_origins:** [`https://home-server.taila0574b.ts.net`]
-- **active_agents:** [`mother`, `sunday`, `dev`, `father`, `researcher`, `log-analyzer`, `qa-tester`, `mother-relay`, `sain-evaluator`, `qa-reviewer`, `agora-host`, `red-team`, `coder`, `code-analyst`, `doc-writer`]
+- **active_agents:** [`mother`, `sunday`, `dev`, `father`, `researcher`, `log-analyzer`, `qa-tester`, `mother-relay`, `sain-evaluator`, `qa-reviewer`, `agora-host`, `red-team`, `coder`, `code-analyst`, `doc-writer`, `git-ops`]
 - **default_agent:** `sunday`
 - **orchestration:** `enabled` (maxConcurrent: 10)
 - **runtime:** systemd user service `openclaw-gateway.service` (primary)
