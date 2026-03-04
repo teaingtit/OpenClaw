@@ -23,7 +23,8 @@ The original `implementation_plan.md.resolved` had these gaps, now addressed:
 - **Allowed:** `git status`, `git fetch`, `git add`, `git commit`, `git pull --rebase`, `git push fork main` (and safe variants, e.g. `git push fork main` only).
 - **Forbidden:** `gh pr *`, push to `origin`, force-push, delete branches, or any PR-related workflow.
 - **Preflight:** Before any push, confirm working tree is clean or committed, and remote is `fork` and branch is `main`.
-- **Path safety:** Run git with `git -C "<Repo root from USER.md>" ...` so agent does not accidentally execute in its workspace folder.
+- **Path safety:** A `~/bin/git` smart wrapper is installed on the host. It detects if cwd is not a git repo and auto-redirects to the project root (`/home/teaingtit/projects/openclaw`). This means the agent can run plain `git status` and it will work correctly without needing `-C` flags.
+- **SOUL.md also documents `repo-git`** wrapper script in the workspace as a fallback for environments without the `~/bin/git` wrapper.
 
 ## 3. Registration and Setup (CLI-Only)
 
@@ -32,7 +33,7 @@ Prefer CLI/config helpers. If your current CLI cannot set nested per-agent `tool
 1. **Add agent (non-interactive):**
 
    ```bash
-   openclaw agents add git-ops --workspace ~/.openclaw/workspace-git-ops --model openrouter/google/gemini-2.0-flash-lite-001 --non-interactive
+   openclaw agents add git-ops --workspace ~/.openclaw/workspace-git-ops --model openrouter/google/gemini-2.5-flash --non-interactive
    ```
 
    From the project repo root so workspace paths resolve. This creates the agent entry and bootstraps `~/.openclaw/workspace-git-ops/` with default templates.
@@ -49,21 +50,32 @@ Prefer CLI/config helpers. If your current CLI cannot set nested per-agent `tool
    - `Fork remote` = `fork`
    - `Default branch` = `main`
 
-3. **Set tool allowlist:** The `agents add` command may not set `tools.allow`. Ensure the `git-ops` entry has `tools: { "allow": ["read", "write", "exec"] }`. If your OpenClaw supports per-agent config set (e.g. gateway or CLI path like `agents.list[N].tools.allow`), use it. Otherwise perform a targeted edit for this key only — never replace the entire config file.
+3. **Install `~/bin/git` wrapper:** This allows the agent to run plain `git` commands that auto-redirect to the project root.
 
-4. **Set identity (optional):**
+   ```bash
+   mkdir -p ~/bin
+   cp agents/workspace-git-ops/repo-git ~/bin/git
+   chmod +x ~/bin/git
+   # Edit ~/bin/git to set OPENCLAW_REPO to your actual project path
+   ```
+
+   Ensure `~/bin` appears before `/usr/bin` in the gateway's PATH (check your systemd service `Environment=PATH=...`).
+
+4. **Set tool allowlist:** The `agents add` command may not set `tools.allow`. Ensure the `git-ops` entry has `tools: { "allow": ["read", "write", "exec"] }`. If your OpenClaw supports per-agent config set (e.g. gateway or CLI path like `agents.list[N].tools.allow`), use it. Otherwise perform a targeted edit for this key only — never replace the entire config file.
+
+5. **Set identity (optional):**
 
    ```bash
    openclaw agents set-identity --agent git-ops --name "Git-Ops" --workspace ~/.openclaw/workspace-git-ops
    ```
 
-5. **Restart gateway** so the new agent and tools are loaded.
+6. **Restart gateway** so the new agent and tools are loaded.
 
 ## 4. Verification and Test Cases
 
 - **Agent visible:** `openclaw agents list` (or Control UI) shows `git-ops`.
 - **Read-only:** Ask agent: "Check git status" / "Run git fetch" — should run and report.
-- **Repo-root guard:** Ask agent to run `git -C "<Repo root>" rev-parse --show-toplevel` before any git task — path must match `USER.md` repo root.
+- **Repo-root guard:** Ask agent: "Run git rev-parse --show-toplevel" — must return the correct project root (via `~/bin/git` wrapper auto-redirect).
 - **Commit:** Ask agent: "Commit current changes with message 'chore: test git-ops'" — should only proceed if working tree has changes and user intent is clear.
 - **Push policy:** Ask agent: "Push to fork main" — should run `git push fork main`. Ask "Open a PR" or "Push to origin" — must **refuse** (no PR, no push to origin).
 - **No PR:** Ask "List open PRs" or "Create a PR" — must refuse and state policy (fork-only, no PR).
