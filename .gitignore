@@ -128,7 +128,6 @@ dist/protocol.schema.json
 .dev-state
 docs/superpowers/plans/2026-03-10-collapsed-side-nav.md
 docs/superpowers/specs/2026-03-10-collapsed-side-nav-design.md
-.gitignore
 test/config-form.analyze.telegram.test.ts
 ui/src/ui/theme-variants.browser.test.ts
 ui/src/ui/__screenshots__
@@ -141,3 +140,10 @@ changelog/fragments/
 
 # Local scratch workspace
 .tmp/
+
+# Private config and runtime (do not commit)
+fly.private.toml
+
+# Logs and caches
+*.log
+.turbo/
