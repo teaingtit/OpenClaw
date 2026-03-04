@@ -1,0 +1,13 @@
+---
+description: Docker, browser, and gateway config for OpenClaw
+globs: "docker/**/*,**/openclaw.json,.antigravityrules"
+alwaysApply: false
+---
+
+# Docker and runtime
+
+- **Docker / Gateway config changes:** To change Docker gateway or related config (e.g. `openclaw.json`), **always use the provided scripts** (e.g., `scripts/docker-rebuild.sh`, `docker-setup.sh`, `clawdock-start` from `scripts/shell-helpers/clawdock-helpers.sh`). **NEVER manually edit `openclaw.json` or other config files directly.** These scripts ensure consistency and prevent conflicts.
+- **Browser in Docker:** Set `browser.executablePath` in openclaw.json (Playwright Chromium path). Do not rely on auto-detect. After image rebuild, get path with: `docker exec openclaw-openclaw-gateway-1 find /home/node/.cache/ms-playwright -name "chrome" -type f` and update openclaw.json. Install Chromium at build time via `docker-rebuild.sh --browser`, not at runtime.
+- **Trusted proxies:** When gateway runs in Docker, add Docker bridge IP to `gateway.trustedProxies` in openclaw.json (e.g. `["127.0.0.1", "::1", "172.22.0.1"]`). Check with `docker network inspect bridge | grep Gateway` if needed.
+- **Sandbox:** Default is off; container is the boundary. Agents with `exec` can run commands in the container; enforce scope via TOOLS.md and SOUL.md, not by assuming sandbox is on.
+- **Non-persistent agents:** Use `sessions_spawn` as a JSON tool call with `agentId`. Do not fall back to a generic sub-agent if the specialist is not in sessions_list.

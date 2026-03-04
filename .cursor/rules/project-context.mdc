@@ -1,0 +1,33 @@
+---
+description: OpenClaw repo context, references, and always-on constraints
+alwaysApply: true
+---
+
+# Project context
+
+- **Understand the project:** Read **ANTIGRAVITY.md** to understand the project (architecture, agents, config, runbooks). Use it as the source of truth; do not guess.
+- **Keep ANTIGRAVITY.md updated:** When you change architecture, config, agents, or runtime setup, update ANTIGRAVITY.md so it stays in sync. If in doubt, update it.
+- **Hardware and devices:** Read **DetailHardware.md** for the user's hardware setup (nodes, machines, network, SSH, roles). Use it when giving device-specific or deployment advice. When you change anything about hardware or devices (new machine, IP, SSH, roles, network), update DetailHardware.md so it stays current.
+- **Repo:** openclaw/openclaw. Use **repo-root-relative paths** in replies (e.g. `src/cli/index.ts`). No absolute or `~/` paths.
+- **Docs:** Mintlify at docs.openclaw.ai. Internal doc links: root-relative, no `.md` suffix.
+- **Canonical rules:** Read **AGENTS.md** (build, release, channels) and **.antigravityrules** (agents, Docker, config, tools) before broad system or config changes. Do not guess; reference those files.
+
+## Always apply
+
+1. **No guessing** — Before architecture/config analysis, read ANTIGRAVITY.md or .antigravityrules. Check `memory/errors/` for past failures.
+2. **Config safety** — Never overwrite `openclaw.json` with write/cat. Use `openclaw config set ...`, `openclaw agents set-identity ...`, or `openclaw doctor --fix` for repair.
+3. **GitHub** — For issue/PR comments that contain backticks or shell chars, use heredoc: `-F - <<'EOF'`. Do not wrap issue/PR refs like #123 in backticks when linking.
+4. **Security** — Read SECURITY.md before triage/severity. No real credentials, phone numbers, or live config in commits or docs.
+
+## Verification before concluding
+
+- After agent/config changes: confirm gateway restart and agent visibility via CLI when relevant.
+- After doc or config edits: ensure ANTIGRAVITY.md and openclaw.json stay consistent where they overlap.
+- Before release/version bumps: get explicit operator consent; do not publish or change versions without permission.
+
+## Avoid
+
+- Prototype mutation for shared behavior; use explicit inheritance/composition.
+- `@ts-nocheck` or disabling `no-explicit-any`; fix root causes.
+- Adding plugin-only deps to root package.json; keep them in the extension's package.json.
+- Stashing or switching branches unless the user explicitly asks.
