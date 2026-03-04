@@ -52,7 +52,7 @@ For the generic Docker flow, see [Docker](/install/docker).
 4. Create persistent host directories
 5. Configure `.env` and `docker-compose.yml`
 6. Bake required binaries into the image
-7. `docker compose up -d`
+7. `docker compose --profile docker-gateway up -d` (or use systemd for gateway; see [Docker install](/install/docker))
 8. Verify persistence and Gateway access
 
 ---
@@ -269,15 +269,17 @@ CMD ["node","dist/index.js"]
 
 ```bash
 docker compose build
-docker compose up -d openclaw-gateway
+docker compose --profile docker-gateway up -d openclaw-gateway
 ```
+
+If you run the gateway via **systemd** instead, do not start the Docker gateway (port 18789 conflict). Use one runtime only.
 
 Verify binaries:
 
 ```bash
-docker compose exec openclaw-gateway which gog
-docker compose exec openclaw-gateway which goplaces
-docker compose exec openclaw-gateway which wacli
+docker compose --profile docker-gateway exec openclaw-gateway which gog
+docker compose --profile docker-gateway exec openclaw-gateway which goplaces
+docker compose --profile docker-gateway exec openclaw-gateway which wacli
 ```
 
 Expected output:
@@ -293,7 +295,7 @@ Expected output:
 ## 9) Verify Gateway
 
 ```bash
-docker compose logs -f openclaw-gateway
+docker compose --profile docker-gateway logs -f openclaw-gateway
 ```
 
 Success:
