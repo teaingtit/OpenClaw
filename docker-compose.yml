@@ -1,5 +1,10 @@
+# Gateway and CLI use profile "docker-gateway" so they are opt-in.
+# When systemd is primary (openclaw-gateway.service), do NOT start these (port 18789 conflict).
+# To run gateway via Docker: docker compose --profile docker-gateway up -d
 services:
   openclaw-gateway:
+    profiles:
+      - docker-gateway
     image: ${OPENCLAW_IMAGE:-openclaw:local}
     environment:
       HOME: /home/node
@@ -49,6 +54,8 @@ services:
       start_period: 20s
 
   openclaw-cli:
+    profiles:
+      - docker-gateway
     image: ${OPENCLAW_IMAGE:-openclaw:local}
     network_mode: "service:openclaw-gateway"
     cap_drop:

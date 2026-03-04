@@ -156,9 +156,9 @@ _clawdock_read_env_token() {
   _clawdock_trim_quotes "$raw"
 }
 
-# Basic Operations
+# Basic Operations (Docker gateway — do not use when systemd is primary; port 18789 conflict)
 clawdock-start() {
-  _clawdock_compose up -d openclaw-gateway
+  _clawdock_compose --profile docker-gateway up -d openclaw-gateway
 }
 
 clawdock-stop() {
@@ -166,15 +166,15 @@ clawdock-stop() {
 }
 
 clawdock-restart() {
-  _clawdock_compose restart openclaw-gateway
+  _clawdock_compose --profile docker-gateway restart openclaw-gateway
 }
 
 clawdock-logs() {
-  _clawdock_compose logs -f openclaw-gateway
+  _clawdock_compose --profile docker-gateway logs -f openclaw-gateway
 }
 
 clawdock-status() {
-  _clawdock_compose ps
+  _clawdock_compose --profile docker-gateway ps
 }
 
 # Navigation
@@ -193,21 +193,21 @@ clawdock-workspace() {
 
 # Container Access
 clawdock-shell() {
-  _clawdock_compose exec openclaw-gateway \
+  _clawdock_compose --profile docker-gateway exec openclaw-gateway \
     bash -c 'echo "alias openclaw=\"./openclaw.mjs\"" > /tmp/.bashrc_openclaw && bash --rcfile /tmp/.bashrc_openclaw'
 }
 
 clawdock-exec() {
-  _clawdock_compose exec openclaw-gateway "$@"
+  _clawdock_compose --profile docker-gateway exec openclaw-gateway "$@"
 }
 
 clawdock-cli() {
-  _clawdock_compose run --rm openclaw-cli "$@"
+  _clawdock_compose --profile docker-gateway run --rm openclaw-cli "$@"
 }
 
 # Maintenance
 clawdock-rebuild() {
-  _clawdock_compose build openclaw-gateway
+  _clawdock_compose --profile docker-gateway build openclaw-gateway
 }
 
 clawdock-clean() {
@@ -224,7 +224,7 @@ clawdock-health() {
     echo "   Check: ${CLAWDOCK_DIR}/.env"
     return 1
   fi
-  _clawdock_compose exec -e "OPENCLAW_GATEWAY_TOKEN=$token" openclaw-gateway \
+  _clawdock_compose --profile docker-gateway exec -e "OPENCLAW_GATEWAY_TOKEN=$token" openclaw-gateway \
     node dist/index.js health
 }
 
