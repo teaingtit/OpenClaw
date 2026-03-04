@@ -829,6 +829,44 @@ dig +short api.telegram.org AAAA
 ```
 
   </Accordion>
+
+  <Accordion title="Why the bot might not respond (audit checklist)">
+
+    If the bot receives the message but never replies, the inbound pipeline may be dropping it before the agent runs. Run `openclaw logs --follow` (and optionally enable verbose) while sending a test message; look for `telegram: drop &lt;reason&gt;` or "Blocked telegram" lines.
+
+    **1. Routing and bindings (message never reaches agent)**
+
+    | Cause | Where | Fix |
+    | ----- | ----- | --- |
+    | Named Telegram account with no binding | Route resolves to default agent for a non-default account | Add a `bindings` entry that matches this account + peer (e.g. `channel: telegram`, `accountId`, `peer`). See [Channel routing](/channels/channel-routing). |
+    | Group disabled in config | `channels.telegram.groups.&lt;id&gt;.enabled: false` | Remove or set `enabled: true` for that group. |
+    | Topic disabled | Topic-level `enabled: false` | Enable the topic or remove the override. |
+    | Sender not in allowlist (group or DM) | `allowFrom` / `groupAllowFrom` or per-group `allowFrom` | Add your Telegram user ID to the right allowlist, or use `dmPolicy: "open"` / `groupPolicy: "open"` where appropriate. |
+    | DM policy or pairing | `dmPolicy: "disabled"` or `allowlist`/`pairing` and sender not approved | Set `dmPolicy: "open"` for open DMs, or run `openclaw pairing list telegram` and approve the chat. |
+    | requireTopic in DM but no topic | Config has `requireTopic: true` for DM and message has no thread | Send in a topic or remove `requireTopic` for that DM config. |
+
+    **2. Handler / event authorization (message never processed)**
+
+    | Cause | Where | Fix |
+    | ----- | ----- | --- |
+    | Direct disabled | `dmPolicy: "disabled"` | Enable DMs or use pairing/allowlist. |
+    | Direct unauthorized | DM allowlist/pairing and sender not allowed | Add sender ID to `allowFrom` or approve in `openclaw pairing list telegram`. |
+    | Group unauthorized | Group allowlist and sender not in list | Add sender to `groupAllowFrom` or per-group `allowFrom`, or set `groupPolicy: "open"`. |
+    | Group policy | `groupPolicy: "disabled"` or allowlist not satisfied | Enable groups and allow the group/sender. |
+
+    **3. Message / mention gating (context built but then dropped)**
+
+    | Cause | Where | Fix |
+    | ----- | ----- | --- |
+    | Empty message | No text and no media | Send text or at least one media. |
+    | Control command from unauthorized sender | Group: user sent a command but not in allowlist for commands | Add sender to allowlist or allow commands for that group. |
+    | requireMention and no mention | Group has `requireMention: true` and message does not mention the bot | Mention the bot (e.g. @YourBot) or set `requireMention: false` for that group (and ensure privacy mode allows the bot to see all messages). |
+
+    **4. After the agent runs**
+
+    If the agent runs but you do not see a reply in Telegram, check: `openclaw channels status --probe`, delivery errors in logs, and that the session’s originating channel/to are correct so replies route back to Telegram.
+
+  </Accordion>
 </AccordionGroup>
 
 More help: [Channel troubleshooting](/channels/troubleshooting).
