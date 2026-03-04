@@ -34,6 +34,10 @@ Sandboxing details: [Sandboxing](/gateway/sandboxing)
 
 ## Containerized Gateway (Docker Compose)
 
+<Note title="Systemd as primary">
+If you run the gateway via **systemd** (`openclaw-gateway.service`), do not start the Docker gateway. Both use port **18789** and will conflict. Use one runtime only. To run gateway in Docker instead, stop systemd first: `systemctl --user disable --now openclaw-gateway.service`, then use `docker compose --profile docker-gateway up -d`.
+</Note>
+
 ### Quick start (recommended)
 
 <Note>
@@ -79,7 +83,7 @@ After it finishes:
 
 - Open `http://127.0.0.1:18789/` in your browser.
 - Paste the token into the Control UI (Settings → token).
-- Need the URL again? Run `docker compose run --rm openclaw-cli dashboard --no-open`.
+- Need the URL again? Run `docker compose --profile docker-gateway run --rm openclaw-cli dashboard --no-open`.
 
 ### Enable agent sandbox for Docker gateway (opt-in)
 
@@ -118,8 +122,8 @@ Notes:
 For scripts and CI, disable Compose pseudo-TTY allocation with `-T`:
 
 ```bash
-docker compose run -T --rm openclaw-cli gateway probe
-docker compose run -T --rm openclaw-cli devices list --json
+docker compose --profile docker-gateway run -T --rm openclaw-cli gateway probe
+docker compose --profile docker-gateway run -T --rm openclaw-cli devices list --json
 ```
 
 If your automation exports no Claude session vars, leaving them unset now resolves to
@@ -223,11 +227,11 @@ See [`ClawDock` Helper README](https://github.com/openclaw/openclaw/blob/main/sc
 
 ```bash
 docker build -t openclaw:local -f Dockerfile .
-docker compose run --rm openclaw-cli onboard
-docker compose up -d openclaw-gateway
+docker compose --profile docker-gateway run --rm openclaw-cli onboard
+docker compose --profile docker-gateway up -d openclaw-gateway
 ```
 
-Note: run `docker compose ...` from the repo root. If you enabled
+Note: run `docker compose ...` from the repo root. The `docker-gateway` profile is required so that a plain `docker compose up -d` does not start the gateway when you use systemd as primary. If you enabled
 `OPENCLAW_EXTRA_MOUNTS` or `OPENCLAW_HOME_VOLUME`, the setup script writes
 `docker-compose.extra.yml`; include it when running Compose elsewhere:
 
@@ -241,9 +245,9 @@ If you see “unauthorized” or “disconnected (1008): pairing required”, fe
 fresh dashboard link and approve the browser device:
 
 ```bash
-docker compose run --rm openclaw-cli dashboard --no-open
-docker compose run --rm openclaw-cli devices list
-docker compose run --rm openclaw-cli devices approve <requestId>
+docker compose --profile docker-gateway run --rm openclaw-cli dashboard --no-open
+docker compose --profile docker-gateway run --rm openclaw-cli devices list
+docker compose --profile docker-gateway run --rm openclaw-cli devices approve <requestId>
 ```
 
 More detail: [Dashboard](/web/dashboard), [Devices](/cli/devices).
@@ -348,7 +352,7 @@ export OPENCLAW_DOCKER_APT_PACKAGES="git curl jq"
 3. **Install Playwright browsers without `npx`** (avoids npm override conflicts):
 
 ```bash
-docker compose run --rm openclaw-cli \
+docker compose --profile docker-gateway run --rm openclaw-cli \
   node /app/node_modules/playwright-core/cli.js install chromium
 ```
 
@@ -415,19 +419,19 @@ Use the CLI container to configure channels, then restart the gateway if needed.
 WhatsApp (QR):
 
 ```bash
-docker compose run --rm openclaw-cli channels login
+docker compose --profile docker-gateway run --rm openclaw-cli channels login
 ```
 
 Telegram (bot token):
 
 ```bash
-docker compose run --rm openclaw-cli channels add --channel telegram --token "<token>"
+docker compose --profile docker-gateway run --rm openclaw-cli channels add --channel telegram --token "<token>"
 ```
 
 Discord (bot token):
 
 ```bash
-docker compose run --rm openclaw-cli channels add --channel discord --token "<token>"
+docker compose --profile docker-gateway run --rm openclaw-cli channels add --channel discord --token "<token>"
 ```
 
 Docs: [WhatsApp](/channels/whatsapp), [Telegram](/channels/telegram), [Discord](/channels/discord)
@@ -459,7 +463,7 @@ etc.) can automatically restart or replace it.
 Authenticated deep health snapshot (gateway + channels):
 
 ```bash
-docker compose exec openclaw-gateway node dist/index.js health --token "$OPENCLAW_GATEWAY_TOKEN"
+docker compose --profile docker-gateway exec openclaw-gateway node dist/index.js health --token "$OPENCLAW_GATEWAY_TOKEN"
 ```
 
 ### E2E smoke test (Docker)
@@ -494,9 +498,9 @@ If you see `Gateway target: ws://172.x.x.x:18789` or repeated `pairing required`
 errors from Docker CLI commands, run:
 
 ```bash
-docker compose run --rm openclaw-cli config set gateway.mode local
-docker compose run --rm openclaw-cli config set gateway.bind lan
-docker compose run --rm openclaw-cli devices list --url ws://127.0.0.1:18789
+docker compose --profile docker-gateway run --rm openclaw-cli config set gateway.mode local
+docker compose --profile docker-gateway run --rm openclaw-cli config set gateway.bind lan
+docker compose --profile docker-gateway run --rm openclaw-cli devices list --url ws://127.0.0.1:18789
 ```
 
 ### Notes

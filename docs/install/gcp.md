@@ -348,15 +348,17 @@ CMD ["node","dist/index.js"]
 
 ```bash
 docker compose build
-docker compose up -d openclaw-gateway
+docker compose --profile docker-gateway up -d openclaw-gateway
 ```
+
+If you run the gateway via **systemd** instead, do not start the Docker gateway (port 18789 conflict). Use one runtime only.
 
 If build fails with `Killed` / `exit code 137` during `pnpm install --frozen-lockfile`, the VM is out of memory. Use `e2-small` minimum, or `e2-medium` for more reliable first builds.
 
 When binding to LAN (`OPENCLAW_GATEWAY_BIND=lan`), configure a trusted browser origin before continuing:
 
 ```bash
-docker compose run --rm openclaw-cli config set gateway.controlUi.allowedOrigins '["http://127.0.0.1:18789"]' --strict-json
+docker compose --profile docker-gateway run --rm openclaw-cli config set gateway.controlUi.allowedOrigins '["http://127.0.0.1:18789"]' --strict-json
 ```
 
 If you changed the gateway port, replace `18789` with your configured port.
@@ -364,9 +366,9 @@ If you changed the gateway port, replace `18789` with your configured port.
 Verify binaries:
 
 ```bash
-docker compose exec openclaw-gateway which gog
-docker compose exec openclaw-gateway which goplaces
-docker compose exec openclaw-gateway which wacli
+docker compose --profile docker-gateway exec openclaw-gateway which gog
+docker compose --profile docker-gateway exec openclaw-gateway which goplaces
+docker compose --profile docker-gateway exec openclaw-gateway which wacli
 ```
 
 Expected output:
@@ -382,7 +384,7 @@ Expected output:
 ## 12) Verify Gateway
 
 ```bash
-docker compose logs -f openclaw-gateway
+docker compose --profile docker-gateway logs -f openclaw-gateway
 ```
 
 Success:
@@ -408,7 +410,7 @@ Open in your browser:
 Fetch a fresh tokenized dashboard link:
 
 ```bash
-docker compose run --rm openclaw-cli dashboard --no-open
+docker compose --profile docker-gateway run --rm openclaw-cli dashboard --no-open
 ```
 
 Paste the token from that URL.
@@ -416,8 +418,8 @@ Paste the token from that URL.
 If Control UI shows `unauthorized` or `disconnected (1008): pairing required`, approve the browser device:
 
 ```bash
-docker compose run --rm openclaw-cli devices list
-docker compose run --rm openclaw-cli devices approve <requestId>
+docker compose --profile docker-gateway run --rm openclaw-cli devices list
+docker compose --profile docker-gateway run --rm openclaw-cli devices approve <requestId>
 ```
 
 ---
@@ -450,8 +452,10 @@ To update OpenClaw on the VM:
 cd ~/openclaw
 git pull
 docker compose build
-docker compose up -d
+docker compose --profile docker-gateway up -d
 ```
+
+When using systemd for the gateway, do not run the Docker gateway; use `systemctl --user restart openclaw-gateway.service` after pulling.
 
 ---
 
