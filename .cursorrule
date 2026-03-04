@@ -1,0 +1,11 @@
+# OpenClaw — Cursor rules
+
+Project rules live in **.cursor/rules/** (modern .mdc setup). Cursor loads them automatically.
+
+- **Understand the project:** Read **ANTIGRAVITY.md** to understand the project; keep it updated whenever you make relevant changes.
+- **Hardware / devices:** Read **DetailHardware.md** for hardware and device info; keep it updated whenever hardware or device setup changes.
+- **Always applied:** `project-context.mdc`, `agents-config.mdc`
+- **When editing TS/TSX:** `typescript-standards.mdc`
+- **When editing Docker/config:** `docker-runtime.mdc`
+
+For full agent and ops discipline, read **AGENTS.md** and **.antigravityrules**.

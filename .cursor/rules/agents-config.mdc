@@ -1,0 +1,25 @@
+---
+description: Agent creation, validation, and openclaw.json / ANTIGRAVITY.md discipline
+alwaysApply: true
+---
+
+# Agents and config
+
+- **Project management rule:** **ANTIGRAVITY.md** describes the project and how it is run. Read it to understand the project; keep it updated whenever you change architecture, config, agents, or runtime (so the next reader or agent has the current picture).
+- **Source of truth:** ANTIGRAVITY.md (and .antigravityrules). Update ANTIGRAVITY.md on any architecture/config/agent change. Read it before broad system analysis.
+- **Config:** Never write/cat to `openclaw.json`. Use `openclaw config set ...`, `openclaw agents set-identity ...`, or `openclaw doctor --fix`. If config is invalid, run `openclaw doctor --fix`; do not create a skeleton and overwrite.
+
+## Agent creation and validation
+
+- New agents: full workspace (SOUL.md, AGENTS.md, IDENTITY.md, TOOLS.md), correct openclaw.json (tool access, sandbox mode), clear step-by-step logic in SOUL.md.
+- Before concluding: verify registration and restart gateway; agent appears via CLI; ANTIGRAVITY.md updated.
+- Validation checklist: see .antigravityrules RULE_AGENT_VALIDATION_CHECKLIST (workspace files, config_validation, content_quality, system_verified).
+
+## Tool scope and subagents
+
+- TOOLS.md must have a Tool Access Policy; allowed tools must match `tools.allow` in openclaw.json. Document tool calls as JSON, not CLI.
+- Agents that spawn or message other agents need in openclaw.json: `subagents.allowAgents`, `tools.sessions.visibility`, `tools.agentToAgent.enabled`, and the relevant tools in `tools.allow`.
+
+## Workflow guardrails
+
+- Max retries per step: 3. Timeout per subtask: 5 minutes. On repeated failure or timeout, stop, write an incident record, and escalate; do not loop.

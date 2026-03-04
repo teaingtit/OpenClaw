@@ -1,0 +1,21 @@
+---
+description: TypeScript and code style for OpenClaw
+globs: "**/*.ts,**/*.tsx"
+alwaysApply: false
+---
+
+# TypeScript standards
+
+- **Language:** TypeScript (ESM). Strict typing; avoid `any`. Type unknown returns (e.g. with zod or explicit interfaces).
+- **Linting:** Oxlint + Oxfmt. Run `pnpm check` before commits. No `@ts-nocheck`; fix root causes.
+- **Style:** Brief comments for non-obvious logic. Keep files under ~500 LOC; split when it helps clarity or tests. Use existing CLI/deps patterns and `createDefaultDeps` for DI.
+
+## Do not
+
+- Share class behavior via prototype mutation (e.g. applyPrototypeMixins, defineProperty on .prototype). Use explicit inheritance/composition so TypeScript can typecheck.
+- Blindly pass `res.data` from Axios without an interface overlay. Type event-bus payloads in `src/infra/events.ts`.
+- Add plugin-only deps to root package.json; keep them in the extension's package.json.
+
+## Tests
+
+- Prefer per-instance stubs over mutating `SomeClass.prototype` unless the test documents why. Colocate `*.test.ts` with source.

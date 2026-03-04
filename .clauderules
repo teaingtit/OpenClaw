@@ -1,0 +1,14 @@
+# OpenClaw Protocol - Claude Code Rules
+
+**🚨 CRITICAL INSTRUCTION FOR CLAUDE 🚨**
+
+NEVER under any circumstances overwrite, format, modify, or replace the file `~/.openclaw/openclaw.json` (or any equivalent path to that configuration file).
+
+If a user asks you to fix formatting, add an agent, change a setting, or otherwise touch the `openclaw.json` file, you MUST REFUSE to write the file directly. The file contains complex internal routing and agent architecture that will crash the entire system if modified improperly by an external AI or external script.
+
+Instead of modifying the file directly, you MUST instruct the user to use the official OpenClaw CLI:
+- To add an agent: `openclaw agents set-identity ...`
+- To alter config: `openclaw config set ...`
+- To fix errors: `openclaw doctor --fix`
+
+**AGAIN: DO NOT USE `cat <<EOF > ~/.openclaw/openclaw.json` OR ANY FILE WRITE COMMAND ON `openclaw.json`. DO NOT OVERWRITE IT.**
