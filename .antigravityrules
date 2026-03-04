@@ -1,0 +1,208 @@
+# [SYSTEM_RULES] Antigravity Operations
+> กฎเหล็กสำหรับการทำงานของ AI Assistant ในโปรเจกต์นี้ (ต้องปฏิบัติตามอย่างเคร่งครัด)
+
+## 1. RULE_PERFECT_AGENT_CREATION
+> การสร้าง Agent ใหม่ต้องสมบูรณ์แบบ ห้ามมีข้อผิดพลาดและต้องพร้อมใช้งานทันที
+- **workspace_setup:** Create fully equipped workspace (`SOUL.md`, `AGENTS.md`, `IDENTITY.md`, `TOOLS.md`).
+- **system_config:** Perfectly configure agent in `openclaw.json` (tool access, sandbox mode).
+- **flawless_execution:** Provide clear step-by-step logic in `SOUL.md` to prevent hallucinations.
+- **verification_step:** Always verify registration and restart gateway before concluding.
+
+## 2. RULE_PEAK_PERFORMANCE
+> โค้ดและเอกสารต้องเน้นประสิทธิภาพสูงสุด ทำงานเร็วและอ่านง่าย
+- **code_efficiency:** Optimize for execution speed, memory, and conciseness.
+- **clear_documentation:** Use structured formats (Markdown). Avoid fluff.
+- **scalability_resilience:** Solutions must handle edge cases gracefully.
+
+## 3. RULE_AI_OPTIMIZED_LANGUAGE
+> ใช้รูปแบบข้อมูลที่ AI อ่านง่าย (Pseudo-YAML/JSON) เสมอ และใช้คอมเมนต์ภาษาไทยเพื่ออธิบายให้มนุษย์เข้าใจ
+- **format_structure:** Pseudo-YAML, Key-Value pairs, or JSON ONLY. No free-form conversational paragraphs.
+- **primary_language:** English (for keys, variables, functional text) to avoid translation overhead.
+- **human_annotations:** Thai inline comments (`#`, `//`, `<!-- -->`, `>`) to explain 'why', context, or purpose.
+- **example_doc:** 
+  ```markdown
+  # [CONTEXT] Model Setting
+  > ตั้งค่าโมเดลสำหรับใช้งาน
+  - **primary_model:** `openrouter/anthropic/claude-opus-4-6`
+  ```
+
+## 4. RULE_STATE_SYNCHRONIZATION
+> ไฟล์ ANTIGRAVITY.md คือ Source of Truth ห้ามเดาข้อมูลเอง ต้องอัปเดตและอ้างอิงไฟล์นี้เสมอ
+- **compulsory_updates:** Update `ANTIGRAVITY.md` immediately upon architecture/config changes.
+- **hallucination_prevention:** Always read `ANTIGRAVITY.md` before broad system analysis.
+- **consistency_check:** Ensure doc matches `openclaw.json` and host state.
+
+## 5. RULE_ERROR_MEMORY
+> จดจำทุกข้อผิดพลาดเพื่อป้องกันการทำพลาดซ้ำซาก
+- **log_format:** Log to `memory/errors/YYYY-MM-DD.md` (fields: `error`, `cause`, `fix`, `lesson`).
+- **pre_check:** Check `memory/errors/` before executing previously failed tasks.
+- **cross_agent_learning:** If systemic, update `ANTIGRAVITY.md` or `AGENT_DESIGN_GUIDE.md`.
+
+## 6. RULE_AGENT_VALIDATION_CHECKLIST
+> ก่อนเริ่มใช้งาน Agent ใหม่ ต้องตรวจสอบ Checklist เหล่านี้ให้ผ่านทั้งหมด
+- **workspace_files:**
+  - `SOUL.md` (Identity, Rules)
+  - `IDENTITY.md` (Metadata, Theme)
+  - `AGENTS.md` (Protocol, Safety)
+  - `TOOLS.md` (Tool Access Policy)
+  - `USER.md` (User context)
+  - `HEARTBEAT.md` (Health tasks)
+  - `CURRENT_STATE.md` (Init state)
+  - `memory/` and `memory/errors/` dirs exist
+- **config_validation:**
+  - Entry exists in `openclaw.json`
+  - Sandbox mode is `off` (Docker container is the isolation boundary; `"all"` requires Docker-in-Docker — not configured, causes `spawn docker EACCES`)
+  - Principle of Least Privilege applied to tools
+  - `model.primary` explicitly pinned
+  - Explicit channel bindings exist
+  - JSON syntax validated
+- **content_quality:**
+  - `SOUL.md` follows `RULE_AI_OPTIMIZED_LANGUAGE` and S.M.A.R.T goals
+- **system_verified:**
+  - Gateway restarted, agent appears via CLI
+  - `ANTIGRAVITY.md` updated
+
+## 7. RULE_CONTEXT_INITIALIZATION
+> ห้ามเดาโครงสร้างระบบ ต้องอ่านไฟล์อ้างอิงค้นหาความจริงก่อนลงมือทำเสมอ
+- **mandatory_reading:** Read `ANTIGRAVITY.md` first.
+- **history_check:** Check `memory/errors/` for debugging.
+- **exploration:** Use `list_dir` or `grep_search` before assuming paths.
+
+## 8. RULE_MODULAR_INSTRUCTIONS
+> แบ่งงานใหญ่เป็นขั้นตอนย่อยๆ ห้ามทำรวดเดียวโดยไม่ตรวจสอบประสิทธิผล
+- **step_execution:** Plan -> Execute Step 1 -> Verify -> Next.
+- **atomic_commits:** Modify logically related files to prevent massive breaking changes.
+- **ask_progression:** Ask "Should I proceed with step 1?" for massive goals.
+
+## 9. RULE_SELF_REVIEW
+> ตรวจสอบคุณภาพงานของตัวเองทุกครั้งก่อนส่งมอบ
+- **constraint_check:** Verify S.M.A.R.T goals are met.
+- **rule_adherence:** Ensure compliance with `RULE_PEAK_PERFORMANCE` and `RULE_AI_OPTIMIZED_LANGUAGE`.
+- **runtime_validation:** Validate JSON/YAML via Python/CLI before applying.
+
+## 10. RULE_MODEL_PINNING_ROUTING
+> กำหนดโมเดลและช่องทางการสื่อสารให้ชัดเจน ห้ามปล่อยให้ระบบสุ่มเลือกเอง
+- **pin_primary:** Pin `model_primary` (e.g., `openrouter/anthropic/claude-opus-4-6`). No `openrouter/auto`.
+- **fallback_model:** Set `model_fallback` with its routing tier in parentheses (e.g., `openrouter/openai/gpt-5.2` (stays in 8.3 general tier)).
+- **routing_category:** Explicitly define `model_routing_category` using the IDs from `ANTIGRAVITY.md` (e.g., `8.3 GENERAL_USE_AND_VALUE` or `8.1 CODING_AND_DEVELOPMENT` + `8.2 REASONING_AND_COMPLEX_TASKS`).
+- **explicit_bindings:** Define explicit channel/user routing in `bindings`. Do not rely solely on `default: true`.
+- **documentation:** Update `ANTIGRAVITY.md`.
+
+## 11. RULE_TOOL_SCOPE_DOCUMENTATION
+> การเข้าถึง Tool ต่างๆ ของ Agent ต้องมีเอกสารระบุขอบเขตการใช้งานกำกับเสมอ
+- **policy_section:** `TOOLS.md` must have `## Tool Access Policy` (Sandbox, Model, Allowed tools, Exec scope, Write scope).
+- **no_implicit_escalation:** Tool grants do not imply unrestricted use. Scope must be defined.
+- **audit_trigger:** If `TOOLS.md` lacks a Policy section, add it immediately before auditing.
+- **sync_rule:** `Allowed tools` in TOOLS.md MUST exactly match `tools.allow` in `openclaw.json`. Mismatch causes the agent to hallucinate its own capabilities (e.g., thinking `browser` is unavailable when it is). After any change to `openclaw.json tools.allow`, update TOOLS.md immediately.
+- **invocation_format:** Tool call examples in SOUL.md/TOOLS.md MUST use JSON object format. Never document tool calls as CLI commands (e.g., `sessions_spawn --agent father` is WRONG; `{"agentId": "father", "task": "..."}` is CORRECT). See `docs/AGENT_DESIGN_GUIDE.md` Section 6.2 for reference table.
+
+## 12. RULE_DOCKER_BROWSER_EXECUTABLE_PATH
+> Browser ใน Docker container ต้องระบุ `executablePath` ตรงๆ ห้ามพึ่งให้ OpenClaw auto-detect เอง
+- **root_cause:** `resolveBrowserExecutableForPlatform` สแกนเฉพาะ path มาตรฐาน (`/usr/bin/chromium`, `/usr/bin/google-chrome` ฯลฯ) Playwright ติดตั้ง Chromium ไว้ที่ `/home/node/.cache/ms-playwright/...` ซึ่งไม่อยู่ใน scan list
+- **required_config:** ต้องตั้ง `browser.executablePath` ใน `openclaw.json` ทุกครั้งที่ใช้ browser ใน Docker:
+  ```json
+  "browser": {
+    "enabled": true,
+    "headless": true,
+    "noSandbox": true,
+    "executablePath": "/home/node/.cache/ms-playwright/chromium-XXXX/chrome-linux64/chrome"
+  }
+  ```
+- **path_verification:** หลัง rebuild image ทุกครั้ง ให้รันคำสั่งนี้เพื่อตรวจสอบ path ล่าสุดก่อน:
+  ```bash
+  docker exec openclaw-openclaw-gateway-1 find /home/node/.cache/ms-playwright -name "chrome" -type f
+  ```
+  แล้วอัพเดท `executablePath` ใน `openclaw.json` ให้ตรงกัน
+- **persistence_note:** ติดตั้ง Chromium ต้องทำที่ **build time** ผ่าน `docker-rebuild.sh --browser` เท่านั้น ห้ามใช้ `docker exec ... playwright install` แบบ runtime เพราะจะหายเมื่อ container ถูก recreate
+- **agent_toolset:** ต้องเพิ่ม `"browser"` ใน `tools.allow` ของ Agent ที่ต้องการใช้งาน browser tool ใน `openclaw.json`
+
+## 13. RULE_NON_PERSISTENT_AGENT_INVOCATION
+> ห้ามเดาสถานะของ Specialist Agent — ต้องใช้ `sessions_spawn` เสมอ
+- **lifecycle_check:** Before delegating, check `ANTIGRAVITY.md` Section 9.1 for the agent's `lifecycle` field.
+- **non_persistent_rule:** Agents with `lifecycle: non-persistent` (currently: `dev`, `father`) NEVER appear in `sessions_list` between invocations. This is NORMAL — NOT an error.
+- **invocation:** `sessions_spawn` is a **JSON tool call** with an `agentId` parameter — NOT a CLI command.
+  ```json
+  { "task": "...", "agentId": "father", "label": "server-health", "mode": "run" }
+  ```
+- **fallback_forbidden:** If a non-persistent agent is absent from `sessions_list`, do NOT fall back to a generic unnamed sub-agent. Use `sessions_spawn` with `agentId` set to the specialist.
+- **detection:** If you call `sessions_spawn` without `agentId` for a specialist task, STOP — that creates a generic unnamed sub-agent, not the intended specialist.
+
+## 14. RULE_DOCKER_GATEWAY_TRUSTED_PROXY
+> Gateway ที่รันใน Docker ต้องเพิ่ม Docker bridge IP ใน `trustedProxies` ด้วยเสมอ
+- **root_cause:** เมื่อ gateway ย้ายจาก local → Docker, connections จาก host จะมาผ่าน Docker bridge IP (`172.22.0.1`) แทน `127.0.0.1` ทำให้ gateway ฟ้อง "untrusted proxy" warning
+- **required_config:** ต้องตั้ง `gateway.trustedProxies` ใน `openclaw.json` ให้ครบทั้งสอง:
+  ```json
+  "gateway": {
+    "trustedProxies": ["127.0.0.1", "::1", "172.22.0.1"]
+  }
+  ```
+- **verify_bridge_ip:** Docker bridge IP อาจเปลี่ยนตาม network ใช้คำสั่งตรวจสอบ:
+  ```bash
+  docker network inspect bridge | grep Gateway
+  ```
+- **detection:** ถ้า gateway log มี `proxy` หรือ `trusted` warning ให้ตรวจสอบ bridge IP ทันที
+
+## 15. RULE_EXEC_SCOPE_AUDIT
+> หมั่นตรวจสอบการใช้งาน `exec` tool ของ Agent เนื่องจากการควบคุมขอบเขตปัจจุบันเป็นแบบ Doc-level เท่านั้น
+- **current_limitation:** `sandbox: "off"` ทำให้ Docker container เป็น boundary เดียวที่มีอยู่ Agent ที่มี `exec` สามารถรันคำสั่งใดๆ ก็ได้ใน container
+- **doc_enforcement:** Sunday จำกัดตัวเองแค่ read-only queries ส่วน Father ใช้ระบบ Tier System นี่คือ "S.M.A.R.T Goal / Prompts" ไม่ใช่ Hard enforcement
+- **audit_protocol:**
+  - The Mother ต้องตรวจสอบ log ของ Gateway เป็นระยะเพื่อดูว่ามี Agent ไหนพยายามใช้ `exec` นอกเหนือสิทธิ์ที่กำหนดใน `TOOLS.md` หรือไม่
+  - ถ้าพบการละเมิด ต้องเพิ่มคำอธิบายที่รัดกุมขึ้นใน `SOUL.md` ของ Agent นั้นๆ ทันที
+  - (Future Improvement) หาก OpenClaw รองรับ let's implement command-level allowlisting for `exec`.
+
+## 16. RULE_SUBAGENT_PERMISSION_CONFIG
+> การอนุญาตให้ Agent ตัวหนึ่ง Spawn หรือพูดคุยกับ Agent ตัวอื่นได้ ต้องตั้งค่า Permission ควบคู่กันไปเสมอ
+- **root_cause:** ถ้ามีแค่ tool `sessions_spawn` หรือ `sessions_send` แต่ไม่ได้ปลดล็อก `allowAgents` และ `visibility` Agent จะถูกบล็อกด้วย Policy ทันที (`agentId is not allowed for sessions_spawn`)
+- **required_config:** Agent ที่ต้องเรียกใช้งาน Agent อื่น ต้องมี config 3 ส่วนนี้ใน `openclaw.json`:
+  ```json
+  "subagents": {
+    "allowAgents": ["*"]
+  },
+  "tools": {
+    "sessions": {
+      "visibility": "all"
+    },
+    "agentToAgent": {
+      "enabled": true
+    },
+    "allow": [
+      "sessions_list",
+      "sessions_send",
+      "sessions_spawn"
+    ]
+  }
+  ```
+- **verification:** หากเพิ่ม Agent ใหม่ที่มีหน้าที่สั่งการ (Supervisor/Router) ต้องตรวจสอบ block นี้ใน config เสมอ
+- **deploy_gate:** `scripts/docker-rebuild.sh` ตรวจ `tools.agentToAgent.enabled` และ `tools.sessions.visibility` อัตโนมัติ — ถ้าขาดจะ exit 1 ก่อน container ขึ้น
+- **self_heal:** Mother HEARTBEAT task 0 ตรวจและ auto-fix flags เหล่านี้ทุก heartbeat โดยไม่ต้องรอ human
+
+## 17. RULE_DOCUMENT_COMPLETENESS
+> เขียนเอกสาร SOUL.md / TOOLS.md ให้ AI อ่านครบทุกส่วน ป้องกัน Lost-in-Middle Effect
+<!-- งานวิจัย Stanford/UC Berkeley (TACL 2024): LLM มี U-shaped attention — ลืมเนื้อหากลาง context ได้ 30%+ -->
+<!-- Google Research (arXiv:2512.14982): การ repeat กฎสำคัญที่ท้ายเอกสารเพิ่มความแม่นยำได้ชัดเจน -->
+- **bookend_critical_rules:** วางกฎที่ห้ามฝ่าฝืนทั้งต้น AND ท้าย SOUL.md — ห้ามวางไว้กลางไฟล์เพียงอย่างเดียว
+- **require_section_headers:** ทุก SOUL.md ต้องมี `##` headers แบ่ง section ชัดเจน — wall of text ห้ามเด็ดขาด
+- **numbered_for_mandatory:** ขั้นตอนที่ต้องทำครบใช้ตัวเลข `1. 2. 3.` ไม่ใช่ bullet `-`
+- **explain_why:** กฎสำคัญต้องมีเหตุผลกำกับ `[Rule] — [consequence if violated]` เพื่อให้ AI generalize edge cases ได้
+- **data_conflict_priority:** `openclaw.json` (live state) > `ANTIGRAVITY.md` (design intent) > `memory/` (history) > model pre-trained knowledge (ห้ามใช้แทนข้อมูลจริง)
+- **quote_then_act:** Task prompts สำหรับงาน document-heavy ต้องบังคับอ้างอิงก่อน: `"Find quotes from [file]. Act ONLY based on those quotes."`
+- **i_dont_know_gate:** ถ้าข้อมูลไม่มีใน source files → ตอบ `"ไม่พบข้อมูลใน [files checked]"` ห้าม generate เอง
+- **agent_persistence:** SOUL.md ของ Specialist Agent ต้องมี 3 คำสั่งนี้: (1) keep going until resolved, (2) use tools to verify — do not guess, (3) plan before each action
+
+## 18. RULE_WORKFLOW_GUARDRAILS
+> กำหนดขอบเขตการทำงาน (Guardrails) เพื่อป้องกัน Token Bloat และ Infinite Loops
+- **max_retries:** กำหนดการทำงานซ้ำ (Retry) ในแต่ละ Step สูงสุดไม่เกิน 3 ครั้ง (Max Retry = 3)
+- **timeout:** กำหนดเวลา Timeout สำหรับแต่ละ Subtask ไม่เกิน 5 นาที
+- **escalation_trigger:** หากทำงานล้มเหลวเกิน 3 ครั้ง หรือใช้เวลาเกินกำหนด ต้องหยุดทำทันที (ห้ามดันทุรังทำ loop ต่อ) ให้เขียน Incident Record (ระบุ `Valid Until`) และ Escalate ปัญหาให้ The Mother หรือเจ้านายทันที
+
+## 19. RULE_CONTAINER_AWARENESS
+> แจ้งให้ Agent ทราบเสมอว่ารันอยู่ใน Docker และมีสิทธิ์ใช้งาน Tools เต็มที่ เพื่อป้องกันอาการหลอน (Sandbox Hallucination)
+- **explicit_environment:** ทุก Agent ต้องมีหมวด `## Operating Environment` ใน `SOUL.md` เพื่อล้างสมองว่าตนเองไม่ได้ถูกจำกัดด้วย Sandbox
+- **no_refusal:** ห้าม Agent อ้างว่า "ทำไม่ได้เพราะฉันอยู่ใน Docker Sandbox" หรือ "ฉันไม่มีสิทธิ์เข้าถึง Host" เนื่องจาก Docker Container คือ Host Computing System หลักที่ Agent มีสิทธิ์เต็มใบ (Full Executive Permission) ในการสั่งงานผ่าน `exec`, `read`, `write`, `sessions_spawn`
+- **validation:** หากแม่ (Mother) พบเห็น Agent ตัวไหนปฏิเสธงานแบบหลอนๆ ให้ Mother เข้าไปเช็คหมวดนี้ใน SOUL.md ทันทีว่าตกหล่นหรือไม่
+
+## 20. CONFIG_PROTECTION_PROTOCOL
+> ห้าม AI ใดๆ ก็ตาม (รวมถึง Agent เอง) เข้าไปยุ่มย่ามหรือเขียนทับไฟล์ `openclaw.json` โดยพลการเด็ดขาด
+- **safe_update:** ท่องไว้เสนอว่า **ห้ามใช้คำสั่ง `cat <<EOF > .../openclaw.json`** และห้ามใช้ Write File Operation ใดๆ เพื่อแก้ไข Config นี้ หากต้องจัดการ Config ให้ใช้ CLI Command อย่าง `openclaw agents set-identity ...` หรือ `openclaw config set ...` หรือแก้ไขผ่าน Node Modules แทนเสมอ
+- **escalation:** หากตรวจพบไฟล์ Config เสีย (JSON Invalid) ให้เรียกใช้ `openclaw doctor --fix` ทันที หากกู้คืนไม่ได้ให้แจ้งมนุษย์ (Sunday/Human) ห้ามพยายามสร้างไฟล์ Skeleton ขึ้นมาเขียนทับเองเพราะจะทำให้ Agent หายทั้งระบบ
