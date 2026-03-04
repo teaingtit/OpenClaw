@@ -268,8 +268,8 @@
 - **role:** Git operations specialist — status, fetch, commit, pull (rebase), push to fork only; no PR workflow
 - **workspace:** `~/.openclaw/workspace-git-ops`
 - **sandbox_mode:** `off` (Docker container is isolation boundary)
-- **model_primary:** `openrouter/google/gemini-2.0-flash-lite-001`
-- **model_fallback:** `openrouter/google/gemini-2.5-flash`
+- **model_primary:** `openrouter/google/gemini-2.5-flash`
+- **git_wrapper:** `~/bin/git` — smart wrapper that auto-redirects to `~/projects/openclaw` when cwd is not a git repo; allows agent to run plain `git` commands without `-C` flag
 - **model_routing_category:** `8.3 GENERAL_USE_AND_VALUE`
 - **permissions:** [`read`, `write`, `exec`] — no browser, no session tools by default
 - **heartbeat:** none (on-demand only)
