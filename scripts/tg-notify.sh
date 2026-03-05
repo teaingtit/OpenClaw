@@ -4,9 +4,9 @@
 # วิธีใช้: ./tg-notify.sh "ข้อความที่ต้องการส่ง"
 
 # ==========================================
-# Bot Configuration
-# TELEGRAM_BOT_TOKEN    = @ZeeXaBOT       → ใช้สำหรับ Sunday AI Agent เท่านั้น
-# TG_BACKLOG_BOT_TOKEN  = BACK_LOG Bot    → ใช้สำหรับ System Alert / Power Events
+# Bot Configuration (see ANTIGRAVITY.md §3b)
+# TELEGRAM_BOT_TOKEN    = ZeeXa Bot  → พูดคุยและสั่งงานเท่านั้น (ห้ามใช้ส่งแจ้งเตือน)
+# TG_BACKLOG_BOT_TOKEN  = BACK_LOG Bot → การแจ้งเตือนทั้งหมด (script นี้ใช้ token นี้เท่านั้น)
 # ==========================================
 BOT_TOKEN=$(grep "^TG_BACKLOG_BOT_TOKEN=" /home/teaingtit/.openclaw/.env 2>/dev/null | cut -d'=' -f2)
 CHAT_ID="6845503187"
@@ -18,9 +18,9 @@ if [ -z "$MESSAGE" ]; then
     exit 1
 fi
 
-# เช็ก Token
-if [ "$BOT_TOKEN" == "YOUR_TELEGRAM_BOT_TOKEN_HERE" ]; then
-    echo "⚠️ Warning: Telegram BOT_TOKEN is not configured in $0. Notification skipped."
+# เช็ก Token — ตรวจทั้ง empty และ placeholder
+if [ -z "$BOT_TOKEN" ] || [ "$BOT_TOKEN" == "YOUR_TELEGRAM_BOT_TOKEN_HERE" ]; then
+    echo "⚠️ Warning: TG_BACKLOG_BOT_TOKEN is not configured in ~/.openclaw/.env. Notification skipped."
     exit 0
 fi
 
