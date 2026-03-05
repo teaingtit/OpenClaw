@@ -1,0 +1,33 @@
+---
+description: กฎการออกแบบ Agent ตามคอนเซปต์ "โมเดลใหญ่วางแผน โมเดลเล็ก/สคริปต์ลงมือทำ" (Script-First Pattern) เพื่อประหยัด Token
+globs: agents/**/*.md, scripts/**/*, **/*.sh, **/*.py, openclaw.json
+alwaysApply: false
+---
+
+# Script-First Pattern & Token Efficiency
+
+เมื่อต้องสร้าง, แก้ไข Agent หรือเขียนโค้ด ให้ยึดหลักการ **"โมเดลใหญ่วางแผน โมเดลเล็ก/สคริปต์ลงมือทำ"** เสมอ เพื่อลดการใช้ Token ของ LLM โดยไม่จำเป็น
+
+## 1. หลักการแบ่งหน้าที่ (Separation of Concerns)
+- **Big Model (เช่น mother, architect, dev):** ทำหน้าที่วางแผน, ตัดสินใจเชิงตรรกะ, ประเมินปัญหา และสั่งงาน/แจกจ่ายงาน
+- **Small Model / Task Worker (เช่น monitor, father, sunday, coder):** ทำหน้าที่รับคำสั่ง, เรียกใช้ Tools หรือ Script ตามแผน, และสรุปผลกลับไปสั้นๆ
+- **Shell / Python Scripts:** ใช้สำหรับงาน Routine ที่เป็น Deterministic (มีผลลัพธ์ตายตัว ไม่ต้องใช้ LLM คิด) เช่น การทำ Health check, อ่านและสแกน Log, ตรวจสอบ Git status, ดึงข้อมูลจาก API หรือตรวจสอบ Config
+
+## 2. กฎการเขียน Heartbeat และ Routine Tasks (Script-First)
+ห้ามให้ Agent ใช้ LLM คิดวิเคราะห์ข้อมูลดิบจากระบบโดยตรงในงาน Routine ที่ต้องทำบ่อยๆ
+- **✅ GOOD (Script-First):** ให้ Agent เรียกใช้งาน Script สำเร็จรูป (เช่น `bash scripts/ops/health-check.sh --format json`) แล้วอ่านผลลัพธ์ที่เป็น JSON หาก `status == "ok"` ให้ Agent ตอบกลับแค่ 1 บรรทัด (หรือไม่ต้องใช้ LLM ช่วยคิดเลย) หากพบความผิดปกติ (Anomaly) ค่อยใช้ LLM วิเคราะห์
+- **❌ BAD:** ให้ Agent รันคำสั่ง OS ดิบๆ เช่น `ss -ltnp`, `docker ps`, `df -h` เองทั้งหมด แล้วใช้ LLM อ่าน output ดิบความยาวหลายพันบรรทัดเพื่อประเมินผลทุกๆ 15 นาที (เปลือง Token)
+
+## 3. การสร้าง Script ใหม่สำหรับ Agent
+- หากพบว่ามีงาน Routine หรือการเรียกใช้คำสั่งที่มีรูปแบบตายตัว ให้ **สร้าง Script แยกไว้** (เช่น เก็บไว้ใน `scripts/ops/` หรือโฟลเดอร์ที่เหมาะสม)
+- Output ของ Script สำหรับให้ Agent อ่าน ควรเป็น **JSON One-liner** หรือข้อความสรุปสั้นๆ เท่านั้น
+- หลังจากสร้างหรือแก้ไข Script จะต้องไปอัปเดตไฟล์ `SCRIPTS_REGISTRY.md` เสมอ เพื่อให้ Agent ตัวอื่นเข้ามาค้นหาและรู้ว่ามี Script เครื่องมือนี้ให้ใช้งาน
+
+## 4. ตัวอย่างการใช้ Script-First ใน SOUL.md ของ Agent
+```markdown
+## Heartbeat Execution
+1. exec: `bash /home/teaingtit/projects/openclaw/scripts/ops/health-check.sh --format json`
+2. Parse JSON result
+3. IF status == "ok" → report to mother: "health OK" (1 line, minimal tokens)
+4. IF status != "ok" → use LLM to analyze anomaly → escalate
+```
