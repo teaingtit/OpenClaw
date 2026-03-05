@@ -5,3 +5,4 @@ Description=OpenClaw health check (script-only, notify on critical)
 Type=oneshot
 Environment=HOME=%h
 ExecStart=/home/teaingtit/projects/openclaw/scripts/ops/health-check.sh --format json --notify-on-critical
+SuccessExitStatus=1 2
