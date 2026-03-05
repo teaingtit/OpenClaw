@@ -22,7 +22,7 @@
 | doc-writer     | documentation writer                      | glm-4.7-flash         | read, write, sessions_send, session_status       |
 | qa-reviewer    | code diff reviewer                        | kimi-k2.5             | read, write, sessions_send, session_status       |
 | red-team       | security analyst                          | kimi-k2.5             | read, write, sessions*\*, memory*\*              |
-| git-ops        | Git fork push only, no PR                 | gemini-2.0-flash-lite | read, write, exec                                |
+| git-ops        | Git fork push only, no PR                 | gemini-2.5-flash      | read, write, exec                                |
 | deploy         | release pipeline coordinator              | gemini-2.5-flash      | read, write, exec, sessions\_\*                  |
 | monitor        | health watchdog                           | gemini-2.5-flash      | read, exec, sessions_send, session_status        |
 | notifier       | Telegram dispatcher                       | gemini-2.5-flash      | exec, sessions_send, session_status              |

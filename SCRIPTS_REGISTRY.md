@@ -12,6 +12,8 @@
 | system-report.sh   | father system check   | `bash scripts/ops/system-report.sh`                                                                                | JSON          |
 | git-preflight.sh   | git-ops / sot-keeper  | `bash scripts/ops/git-preflight.sh --format json` or `--watch-list openclaw.json,ANTIGRAVITY.md,DetailHardware.md` | JSON          |
 | agent-list.sh      | mother agent count    | `bash scripts/ops/agent-list.sh --format json` or `--check-health`                                                 | JSON or table |
+| audit-agents.py    | mother / ops check    | `python3 scripts/ops/audit-agents.py`                                                                              | Text          |
+| fix-agents.py      | mother / ops repair   | `python3 scripts/ops/fix-agents.py` (แก้ tools.allow + เพิ่ม agents ที่ขาด ใน openclaw.json)                       | Text          |
 
 Paths: จาก repo root คือ `scripts/ops/<name>`. บน host ที่รัน gateway ใช้ path เต็มได้ เช่น `/home/teaingtit/projects/openclaw/scripts/ops/health-check.sh`.
 
@@ -26,11 +28,30 @@ Paths: จาก repo root คือ `scripts/ops/<name>`. บน host ที่
 | idle-monitor.sh   | (รันผ่าน cron/timer)                    |
 | check-gpu-load.sh | `bash scripts/check-gpu-load.sh`        |
 
+## Worker / Ollama (scripts/)
+
+| Script                        | วิธีเรียก                                                              |
+| ----------------------------- | ---------------------------------------------------------------------- |
+| pull-worker-models.sh         | `bash scripts/pull-worker-models.sh` or `--group 1`–`5` or `--dry-run` |
+| configure-ollama-keepalive.sh | `bash scripts/configure-ollama-keepalive.sh 5m` (เมื่อ ryzenpc ถึงได้) |
+
 ## Notification
 
-| Script       | วิธีเรียก                             |
-| ------------ | ------------------------------------- |
-| tg-notify.sh | `bash scripts/tg-notify.sh "message"` |
+| Script                      | วิธีเรียก                                                                                      |
+| --------------------------- | ---------------------------------------------------------------------------------------------- |
+| tg-notify.sh                | `bash scripts/tg-notify.sh "message"`                                                          |
+| backlog-bot-commands.sh     | `bash scripts/backlog-bot-commands.sh` (cron ทุก 2 นาที; รองรับ /wake_ryzenpc, /sleep_ryzenpc) |
+| set-backlog-bot-commands.sh | `bash scripts/set-backlog-bot-commands.sh` (รันครั้งเดียว เพื่อตั้งเมนู Backlog Bot)           |
+
+## Backlog Telegram Bot (รับคำสั่ง Manual)
+
+| Script                      | วิธีเรียก                                                                                       |
+| --------------------------- | ----------------------------------------------------------------------------------------------- |
+| backlog-bot-commands.sh     | `bash scripts/backlog-bot-commands.sh` — รันแบบ cron ทุก 1–2 นาที เพื่อรับคำสั่งจาก Backlog bot |
+| set-backlog-bot-commands.sh | `bash scripts/set-backlog-bot-commands.sh` — ลงทะเบียนเมนูคำสั่งให้ Bot (รันครั้งเดียว)         |
+
+**คำสั่งใน Backlog Bot:** `/wake_ryzenpc` ปลุก ryzenpc, `/sleep_ryzenpc` ปิด ryzenpc, `/help` แสดงคำสั่ง  
+**Cron ตัวอย่าง (บน minipc):** `*/2 * * * * /home/teaingtit/projects/openclaw/scripts/backlog-bot-commands.sh`
 
 ## Maintenance
 

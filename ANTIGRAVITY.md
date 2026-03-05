@@ -46,7 +46,7 @@
 - **agents_workers:** Isolated directories (`~/.openclaw/workspace-*`)
 - **channels:** Interfaces bridging reality and AI (e.g., `plugin-telegram@v1.4.1`)
 - **sandbox_layer:** `tools.allow` per agent in `openclaw.json`; OS-level sandbox (`sandbox.mode`) is `off` for all agents — Docker container is the isolation boundary. `sandbox.mode: "all"` requires Docker-in-Docker (not configured).
-- **model_provider:** All models route through OpenRouter. Model strings MUST use `openrouter/<provider>/<model>` format (e.g. `openrouter/anthropic/claude-opus-4-6`). Bare `anthropic/...` or `openai/...` tries direct API and fails — no direct API keys configured.
+- **model_provider:** Primary: OpenRouter. Optional local: **Ollama on worker** (ryzenpc `100.82.51.31:11434`). Model strings for cloud: `openrouter/<provider>/<model>`. For local: `ollama/<model>` (e.g. `ollama/qwen2.5-coder:7b`). Bare `anthropic/...` or `openai/...` tries direct API and fails — no direct API keys configured.
 - **required_config_flags (CRITICAL):** The following root-level keys in `openclaw.json` are MANDATORY for inter-agent delegation to work. If either is missing, ALL agent-to-agent communication fails silently:
   ```json
   "tools": { "sessions": { "visibility": "all" }, "agentToAgent": { "enabled": true } }
@@ -61,22 +61,29 @@
 | `worker_ai_engine` | AI Engine / Worker (ryzenpc) | AMD Ryzen 5 5600, RTX 4060 8GB, 32GB DDR4, 512GB NVMe               | Ubuntu 26.04 LTS (Single OS)   | `100.82.51.31` (Wake via WoL enp34s0) |
 | `client`           | Client                       | ASUS ExpertBook P3605CVA (i5-13420H, 16GB RAM, 1TB NVMe, Intel UHD) | Windows                        | `100.71.184.70`                       |
 
+### 3a. Worker Node — Ollama models (ryzenpc)
+
+Ollama runs on ryzenpc at `http://100.82.51.31:11434` (bind `0.0.0.0`). Gateway discovers models via `models.providers.ollama.baseUrl`. Installed models (14): **Reasoning/General:** deepseek-r1:8b, qwen2.5:7b, mistral:7b, llama3.2:3b, gemma2:2b. **Coding:** qwen2.5-coder:7b, starcoder2:3b, qwen2.5-coder:1.5b. **Vision:** minicpm-v:8b, moondream:latest, llava:7b. **Embedding/RAG:** nomic-embed-text, bge-m3. **Specialized:** qwen2-math:7b. Pull script: `scripts/pull-worker-models.sh`. OLLAMA_KEEP_ALIVE: set via `scripts/configure-ollama-keepalive.sh 5m` when ryzenpc is reachable. See `docs/workflows/local-inference.md`.
+
 ## 3b. TELEGRAM_BOT_REGISTRY
 
 <!-- Single Source of Truth สำหรับ Telegram Bots ทั้งหมด — อัปเดตที่นี่ที่เดียว -->
 
 > **กฎเหล็ก:** Token ทุกตัวต้องเก็บใน `~/.openclaw/.env` เท่านั้น **ห้าม hardcode ใน script ใดๆ**
 
-| env_variable              | bot_name     | username   | purpose                                                                    |
-| ------------------------- | ------------ | ---------- | -------------------------------------------------------------------------- |
-| `TELEGRAM_BOT_TOKEN`      | ZeeXa Bot    | @ZeeXaBOT  | **Sunday AI Agent เท่านั้น** — รับ-ส่งข้อความจากผู้ใช้ผ่าน Telegram        |
-| `TG_BACKLOG_BOT_TOKEN`    | BACK_LOG Bot | (BACK_LOG) | **System Alerts** — แจ้งเตือน Power Events, Config Backup, BACKLOG entries |
-| `TG_NOTIFICATION_CHAT_ID` | —            | —          | Chat ID ปลายทาง (เจ้าของระบบ) สำหรับทั้ง 2 bots                            |
+| env_variable              | bot_name     | username   | purpose                                                                                   |
+| ------------------------- | ------------ | ---------- | ----------------------------------------------------------------------------------------- |
+| `TELEGRAM_BOT_TOKEN`      | ZeeXa Bot    | @ZeeXaBOT  | **พูดคุยและสั่งงานเท่านั้น** — รับ-ส่งข้อความกับ Sunday (คำสั่ง / สนทนา)                  |
+| `TG_BACKLOG_BOT_TOKEN`    | BACK_LOG Bot | (BACK_LOG) | **การแจ้งเตือนทั้งหมด** — System Alerts, Power Events, Config Backup, BACKLOG, escalation |
+| `TG_NOTIFICATION_CHAT_ID` | —            | —          | Chat ID ปลายทาง (เจ้าของระบบ) สำหรับทั้ง 2 bots                                           |
 
-**สำหรับ Agent/Script ที่ต้องส่งแจ้งเตือน:**
+**เส้นทางแจ้งเตือน (ทุก Agent):**
 
-- ใช้สคริปต์ `~/projects/openclaw/scripts/tg-notify.sh "ข้อความ"` เสมอ
-- ห้ามเรียก Telegram API โดยตรงหรือใช้ `TELEGRAM_BOT_TOKEN` (ของ Sunday)
+- **ZeeXa Bot:** ใช้เฉพาะการพูดคุยและสั่งงาน (ผู้ใช้ ↔ Sunday). ห้ามส่งเนื้อหาแจ้งเตือนผ่าน ZeeXa.
+- **BACK_LOG Bot:** การแจ้งเตือนทุกรูปแบบ (health, escalation, backup, power, ฯลฯ) ต้องส่งผ่านสคริปต์ `~/projects/openclaw/scripts/tg-notify.sh "ข้อความ"` เท่านั้น
+- ห้ามเรียก Telegram API โดยตรงหรือใช้ `TELEGRAM_BOT_TOKEN` สำหรับการแจ้งเตือน
+
+**คำสั่ง Manual ผ่าน Backlog Bot:** เจ้าของระบบสามารถสั่งปลุก/ปิด ryzenpc จากแชท Backlog ได้โดยส่ง `/wake_ryzenpc` หรือ `/sleep_ryzenpc` — ต้องรัน polling script บน minipc: `scripts/backlog-bot-commands.sh` (แนะนำ cron ทุก 2 นาที). ลงทะเบียนเมนูคำสั่งครั้งเดียว: `scripts/set-backlog-bot-commands.sh`. ดู SCRIPTS_REGISTRY.md § Backlog Telegram Bot
 
 ## 4. TECH_STACK
 
@@ -338,6 +345,8 @@
 - `projects/openclaw/docs/AGENT_DESIGN_GUIDE.md`: Best practices for building AI agents
 - `projects/openclaw/docs/agents/git-ops-agent.md`: Git-ops agent runbook and guardrails (fork-only push, no PR)
 - `projects/openclaw/agents/workspace-git-ops/`: Canonical workspace files for `git-ops` (copy to `~/.openclaw/workspace-git-ops/` after `agents add`)
+- `projects/openclaw/docs/workflows/local-inference.md`: Local inference (Ollama on ryzenpc) routing and VRAM/concurrency
+- `projects/openclaw/docs/workflows/n8n/`: n8n workflow templates (Ollama Task Router: coding/reasoning/vision/embedding/general/math/translation; Document Processing, Daily Health, SAIN local model)
 - `projects/openclaw/agents/workspace-architect/`, `workspace-deploy/`, `workspace-monitor/`, `workspace-notifier/`, `workspace-intel/`, `workspace-sot-keeper/`: Canonical workspace files for architect, deploy, monitor, notifier, intel, sot-keeper
 - `~/.openclaw/knowledge-base/intel/`: Daily intel reports (YYYY-MM-DD.md)
 - `~/.openclaw`: State directory (Credentials, sessions, agent storage) — volume-mounted into container
@@ -366,6 +375,7 @@
 - **runtime:** systemd user service `openclaw-gateway.service` (primary)
 - **systemd_service:** enabled — gateway runs via systemd; use `systemctl --user enable --now openclaw-gateway.service`
 - **Docker gateway:** opt-in only — use profile `docker-gateway` to run gateway in Docker; do not start when systemd is primary (port 18789 conflict). See §7.0.
+- **n8n:** Workflow automation on minipc — container `sain-n8n` port `5678` (PostgreSQL backend, Basic Auth). Access: `http://100.96.9.50:5678`. Workflow templates: `docs/workflows/n8n/`. Ollama (ryzenpc) in workflows: `http://100.82.51.31:11434`. After Docker restart, reconnect network: `docker network connect sain_network sain-n8n` then `docker restart sain-n8n`.
 
 ## 7.0 GATEWAY_SINGLE_RUNTIME (systemd vs Docker)
 
@@ -400,7 +410,7 @@ OpenClaw parses the prefix before the first `/` as the provider name.
 - ❌ WRONG: `anthropic/claude-opus-4-6` → tries provider=`anthropic` directly → no API key → fails
 - ❌ WRONG: `openai/gpt-5.2` → tries provider=`openai` directly → no API key → fails
 
-**Rule:** All model strings in `openclaw.json` MUST be prefixed with `openrouter/` — the only configured provider.
+**Rule:** Cloud models: prefix `openrouter/`. Local (Ollama on ryzenpc): prefix `ollama/` (e.g. `ollama/qwen2.5-coder:7b`). Bare `anthropic/` or `openai/` fail (no direct API keys).
 
 ## 7.3 SANDBOX_IN_DOCKER
 

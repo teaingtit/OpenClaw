@@ -1,4 +1,6 @@
 #!/bin/bash
 # สคริปต์ปิด Worker Node (ryzenpc)
+# ใช้ ssh_config เดียวกับ father/pull-worker/jit-wrapper (Host: ryzenpc)
+SSH_CONFIG="${OPENCLAW_FATHER_SSH_CONFIG:-$HOME/.openclaw/workspace-father/ssh_config}"
 echo "💤 กำลังสั่งปิด ryzenpc..."
-ssh teaingtit@192.168.1.27 "sudo shutdown -h now"
+ssh -F "$SSH_CONFIG" ryzenpc "sudo shutdown -h now"
