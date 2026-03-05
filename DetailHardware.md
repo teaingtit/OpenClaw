@@ -27,7 +27,9 @@
 - **Tailscale IP**: `100.82.51.31`
 - **SSH**: `ssh ryzenpc` (ใช้ Key: `teaingtit`, Passwordless sudo)
 - **หน้าที่หลัก**: ประมวลผล AI และงานที่ต้องใช้ GPU
-- **AI Stack**: NVIDIA Driver 590 / Ollama (models: `~/ai-models`) / Tailscale
+- **AI Stack**: NVIDIA Driver 590 / Ollama (models: `~/ai-models`, bind `0.0.0.0:11434`) / Tailscale
+- **Ollama models (14)**: deepseek-r1:8b, qwen2.5:7b, mistral:7b, llama3.2:3b, gemma2:2b, qwen2.5-coder:7b, starcoder2:3b, qwen2.5-coder:1.5b, minicpm-v:8b, moondream:latest, llava:7b, nomic-embed-text, bge-m3, qwen2-math:7b. Pull: `scripts/pull-worker-models.sh`. Keep-alive: `scripts/configure-ollama-keepalive.sh 5m`
+- **Audio (optional, systemd)**: whisper-api (port 8787), tts-api (port 8788) — services are installed but **disabled by default** to save VRAM. Enable manually when needed.
 - **Wake-on-LAN**: `enp34s0` Magic Packet — ปลุกเครื่องผ่าน Master Node ได้
 - **Auto-login**: TTY1 เข้า terminal อัตโนมัติ
 
