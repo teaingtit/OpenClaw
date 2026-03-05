@@ -1,0 +1,321 @@
+{
+  "name": "Ollama Task Router",
+  "nodes": [
+    {
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "ollama-task-router",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ollama-task",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "name": "Classify Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "http://100.82.51.31:11434/api/generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama3.2:3b\",\n  \"prompt\": \"Classify the following task into exactly one: coding, reasoning, vision, embedding, general, math, translation. Reply with only that word. Task: \" + JSON.stringify($json.body?.task ?? $json.body ?? ''),\n  \"stream\": false\n}",
+        "options": {
+          "timeout": 30000,
+          "retryOnFail": true,
+          "maxTries": 3,
+          "waitBetweenTries": 5000
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "name": "Switch by Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [680, 300],
+      "parameters": {
+        "rules": {
+          "rules": [
+            {
+              "outputKey": "coding",
+              "conditions": {
+                "conditions": [
+                  {
+                    "value1": "={{ $json.response?.toLowerCase().trim() }}",
+                    "value2": "coding",
+                    "operator": { "type": "string", "operation": "contains" }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "reasoning",
+              "conditions": {
+                "conditions": [
+                  {
+                    "value1": "={{ $json.response?.toLowerCase().trim() }}",
+                    "value2": "reasoning",
+                    "operator": { "type": "string", "operation": "contains" }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "vision",
+              "conditions": {
+                "conditions": [
+                  {
+                    "value1": "={{ $json.response?.toLowerCase().trim() }}",
+                    "value2": "vision",
+                    "operator": { "type": "string", "operation": "contains" }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "embedding",
+              "conditions": {
+                "conditions": [
+                  {
+                    "value1": "={{ $json.response?.toLowerCase().trim() }}",
+                    "value2": "embedding",
+                    "operator": { "type": "string", "operation": "contains" }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "general",
+              "conditions": {
+                "conditions": [
+                  {
+                    "value1": "={{ $json.response?.toLowerCase().trim() }}",
+                    "value2": "general",
+                    "operator": { "type": "string", "operation": "contains" }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "math",
+              "conditions": {
+                "conditions": [
+                  {
+                    "value1": "={{ $json.response?.toLowerCase().trim() }}",
+                    "value2": "math",
+                    "operator": { "type": "string", "operation": "contains" }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "translation",
+              "conditions": {
+                "conditions": [
+                  {
+                    "value1": "={{ $json.response?.toLowerCase().trim() }}",
+                    "value2": "translation",
+                    "operator": { "type": "string", "operation": "contains" }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "fallbackOutput": "extra"
+      }
+    },
+    {
+      "id": "a1b2c3d4-0004-4000-8000-000000000004",
+      "name": "Ollama Coding",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 100],
+      "parameters": {
+        "method": "POST",
+        "url": "http://100.82.51.31:11434/api/generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"qwen2.5-coder:7b\",\n  \"prompt\": $json.body?.prompt ?? $json.body,\n  \"stream\": false\n}",
+        "options": {
+          "timeout": 120000,
+          "retryOnFail": true,
+          "maxTries": 3,
+          "waitBetweenTries": 5000
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0005-4000-8000-000000000005",
+      "name": "Ollama Reasoning",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 220],
+      "parameters": {
+        "method": "POST",
+        "url": "http://100.82.51.31:11434/api/generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"deepseek-r1:8b\",\n  \"prompt\": $json.body?.prompt ?? $json.body,\n  \"stream\": false\n}",
+        "options": {
+          "timeout": 120000,
+          "retryOnFail": true,
+          "maxTries": 3,
+          "waitBetweenTries": 5000
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0006-4000-8000-000000000006",
+      "name": "Ollama Vision",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 340],
+      "parameters": {
+        "method": "POST",
+        "url": "http://100.82.51.31:11434/api/generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"minicpm-v:8b\",\n  \"prompt\": $json.body?.prompt ?? $json.body,\n  \"stream\": false\n}",
+        "options": {
+          "timeout": 120000,
+          "retryOnFail": true,
+          "maxTries": 3,
+          "waitBetweenTries": 5000
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0007-4000-8000-000000000007",
+      "name": "Ollama Embedding",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 460],
+      "parameters": {
+        "method": "POST",
+        "url": "http://100.82.51.31:11434/api/embed",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"nomic-embed-text\",\n  \"input\": $json.body?.prompt ?? $json.body ?? ''\n}",
+        "options": {
+          "timeout": 60000,
+          "retryOnFail": true,
+          "maxTries": 3,
+          "waitBetweenTries": 5000
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0009-4000-8000-000000000009",
+      "name": "Ollama General",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 580],
+      "parameters": {
+        "method": "POST",
+        "url": "http://100.82.51.31:11434/api/generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"qwen2.5:7b\",\n  \"prompt\": $json.body?.prompt ?? $json.body,\n  \"stream\": false\n}",
+        "options": {
+          "timeout": 120000,
+          "retryOnFail": true,
+          "maxTries": 3,
+          "waitBetweenTries": 5000
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-000a-4000-8000-00000000000a",
+      "name": "Ollama Math",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 700],
+      "parameters": {
+        "method": "POST",
+        "url": "http://100.82.51.31:11434/api/generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"qwen2-math:7b\",\n  \"prompt\": $json.body?.prompt ?? $json.body,\n  \"stream\": false\n}",
+        "options": {
+          "timeout": 120000,
+          "retryOnFail": true,
+          "maxTries": 3,
+          "waitBetweenTries": 5000
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-000b-4000-8000-00000000000b",
+      "name": "Ollama Translation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 820],
+      "parameters": {
+        "method": "POST",
+        "url": "http://100.82.51.31:11434/api/generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gemma2:2b\",\n  \"prompt\": $json.body?.prompt ?? $json.body,\n  \"stream\": false\n}",
+        "options": {
+          "timeout": 60000,
+          "retryOnFail": true,
+          "maxTries": 3,
+          "waitBetweenTries": 5000
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0008-4000-8000-000000000008",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1120, 300],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"task_type\": $('Classify Task').first().json.response?.trim(), \"result\": $json.response ?? $json } }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "Classify Task", "type": "main", "index": 0 }]] },
+    "Classify Task": { "main": [[{ "node": "Switch by Type", "type": "main", "index": 0 }]] },
+    "Switch by Type": {
+      "main": [
+        [{ "node": "Ollama Coding", "type": "main", "index": 0 }],
+        [{ "node": "Ollama Reasoning", "type": "main", "index": 0 }],
+        [{ "node": "Ollama Vision", "type": "main", "index": 0 }],
+        [{ "node": "Ollama Embedding", "type": "main", "index": 0 }],
+        [{ "node": "Ollama General", "type": "main", "index": 0 }],
+        [{ "node": "Ollama Math", "type": "main", "index": 0 }],
+        [{ "node": "Ollama Translation", "type": "main", "index": 0 }],
+        [{ "node": "Respond to Webhook", "type": "main", "index": 0 }]
+      ]
+    },
+    "Ollama Coding": { "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]] },
+    "Ollama Reasoning": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    },
+    "Ollama Vision": { "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]] },
+    "Ollama Embedding": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    },
+    "Ollama General": { "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]] },
+    "Ollama Math": { "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]] },
+    "Ollama Translation": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1", "maxConcurrency": 1 },
+  "staticData": null,
+  "meta": { "templateCredsSetupCompleted": false },
+  "pinData": {}
+}
