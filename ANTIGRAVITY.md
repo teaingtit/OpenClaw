@@ -1,5 +1,7 @@
 # [SYSTEM_CONTEXT] ANTIGRAVITY / OpenClaw
 
+> **AI Quick Start:** อ่าน `SYSTEM_INDEX.md` ก่อนสำหรับ overview และ pointers — ไฟล์นี้มีรายละเอียดเต็ม
+
 > Single source of truth for AI Assistants to reduce hallucination and redundant searches.
 
 > This document describes the **design, architecture, and current state** of the OpenClaw system.
@@ -11,14 +13,15 @@
 <!-- Navigation guide — อ่านส่วนนี้ก่อนเสมอ เพื่อให้รู้ว่าต้องไปที่ section ไหน -->
 <!-- ไฟล์นี้ยาว — ใช้ตารางนี้หา section ที่ต้องการแทนการอ่านทั้งหมดตามลำดับ -->
 
-| หากต้องการ...                          | Section                          |
-| -------------------------------------- | -------------------------------- |
-| รู้ว่า agent ตัวไหนทำอะไร / model อะไร | §5 AGENT_DEFINITIONS             |
-| เรียก agent / delegate งาน / spawn     | §9 AGENT_INTERACTION_RULES       |
-| เลือกโมเดลสำหรับ agent ใหม่            | §8 ROUTING_MODELS                |
-| แก้ไข config / docker / restart        | §2 + §7                          |
-| debug incident / escalate ปัญหา        | §10 INCIDENT_ESCALATION_PROTOCOL |
-| ดู file paths สำคัญ                    | §6 CRITICAL_FILE_MAP             |
+| หากต้องการ...                          | Section                                 |
+| -------------------------------------- | --------------------------------------- |
+| รู้ว่า agent ตัวไหนทำอะไร / model อะไร | §5 AGENT_DEFINITIONS                    |
+| เรียก agent / delegate งาน / spawn     | §9 AGENT_INTERACTION_RULES              |
+| เลือกโมเดลสำหรับ agent ใหม่            | §8 ROUTING_MODELS                       |
+| แก้ไข config / docker / restart        | §2 + §7                                 |
+| debug incident / escalate ปัญหา        | §10 INCIDENT_ESCALATION_PROTOCOL        |
+| ดู file paths สำคัญ                    | §6 CRITICAL_FILE_MAP                    |
+| สคริป routine / script-first ลดโทเคน   | §6b SCRIPT_TOOLKIT, SCRIPTS_REGISTRY.md |
 
 **⚠️ 3 กฎที่ต้องจำก่อนทำอะไรก็ตาม:**
 
@@ -167,16 +170,17 @@
   - **Model:** `openrouter/z-ai/glm-4.7-flash` (tier: 8.3)
   - **Purpose:** Documentation and report writing from templates; spawned by architect, mother, or dev.
 
-### 5.6 THE ARCHITECT (AI Code Assistant)
+### 5.6 THE ARCHITECT (Escalation Handler + Lead Developer)
 
 - **id:** `architect`
-- **role:** Lead Developer, System Architect & Backlog Manager
-- **workspace:** `/home/teaingtit/.openclaw/workspace-architect` (External)
+- **role:** Escalation Handler (primary when spawned by mother), Lead Developer & Backlog Manager
+- **workspace:** `~/.openclaw/workspace-architect` (canonical in repo `agents/workspace-architect/`)
 - **model_primary:** `openrouter/openai/gpt-5.2`
 - **model_fallback:** `openrouter/anthropic/claude-sonnet-4.6`
-- **permission:** `full_host_access`
-- **heartbeat:** `none` (Invoked manually by Human)
-- **purpose:** Handles unresolvable incidents and feature requests escalated by Mother/Agents via `DEVELOPMENT_BACKLOG.md`.
+- **permissions:** `read`, `write` (backlog + repo), `exec`, `sessions_send`, `sessions_list`, `session_status`
+- **heartbeat:** none (on-demand: mother spawns for escalation; or manual for backlog work)
+- **escalation_flow:** Mother sends escalation payload → architect writes entry to `DEVELOPMENT_BACKLOG.md` → architect `sessions_send` to notifier → architect replies to mother with status
+- **purpose:** When any agent fails 3 retries, mother spawns architect; architect logs to backlog and notifies user via notifier. Also triages and fixes backlog issues as Lead Developer.
 
 ### 5.7 MOTHER-RELAY: Herald (Batch Message Relay)
 
@@ -277,6 +281,56 @@
 - **push_policy:** Push only to remote `fork` branch `main`; never push to `origin`; refuse any `gh pr *` or PR-related requests
 - **runbook:** See `docs/agents/git-ops-agent.md`; workspace files in repo `agents/workspace-git-ops/`
 
+### 5.14 DEPLOY: Release Pipeline Coordinator
+
+- **id:** `deploy`
+- **role:** Release pipeline coordinator — prerequisites, Docker/npm build, restart via father, health check, rollback
+- **workspace:** `~/.openclaw/workspace-deploy` (canonical in repo `agents/workspace-deploy/`)
+- **model_primary:** `openrouter/google/gemini-2.5-flash`
+- **permissions:** `read`, `write`, `exec`, `sessions_send`, `sessions_list`, `sessions_spawn`, `session_status`
+- **heartbeat:** none (on-demand)
+- **lifecycle:** non-persistent — spawned by mother or user for release tasks
+
+### 5.15 MONITOR: Proactive Health Watchdog
+
+- **id:** `monitor`
+- **role:** Proactive health watchdog — poll gateway port 18789, Docker, disk, memory; alert mother on anomaly
+- **workspace:** `~/.openclaw/workspace-monitor` (canonical in repo `agents/workspace-monitor/`)
+- **model_primary:** `openrouter/google/gemini-2.5-flash`
+- **permissions:** `read`, `exec`, `sessions_send`, `session_status`
+- **heartbeat:** every 15m (config in openclaw.json)
+- **lifecycle:** persistent (heartbeat-driven)
+
+### 5.16 NOTIFIER: Telegram Notification Dispatcher
+
+- **id:** `notifier`
+- **role:** Telegram notification dispatcher — receives payload from architect or intel, formats message, runs `tg-notify.sh`
+- **workspace:** `~/.openclaw/workspace-notifier` (canonical in repo `agents/workspace-notifier/`)
+- **model_primary:** `openrouter/google/gemini-2.5-flash`
+- **permissions:** `exec` (tg-notify only), `sessions_send`, `session_status`
+- **heartbeat:** none (on-demand when architect or intel sends notification request)
+
+### 5.17 INTEL: Intelligence Gathering Coordinator
+
+- **id:** `intel`
+- **role:** Intelligence coordinator — daily sweep via researcher (OpenRouter, OpenClaw releases, AI news, HN, Reddit, GitHub trending); synthesize; report to mother; daily digest via notifier
+- **workspace:** `~/.openclaw/workspace-intel` (canonical in repo `agents/workspace-intel/`)
+- **model_primary:** `openrouter/google/gemini-2.5-flash`
+- **permissions:** `read`, `write`, `browser`, `sessions_send`, `sessions_spawn`, `sessions_list`, `session_status`, `memory_set`, `memory_get`
+- **heartbeat:** `every: "24h"` (design intent: daily 06:00 Asia/Bangkok; gateway v2026.3.2 does not support `at`/`timezone` — use cron or upgrade for fixed-time schedule)
+- **output:** `~/.openclaw/knowledge-base/intel/YYYY-MM-DD.md`; actionable items to mother; digest to notifier
+- **lifecycle:** persistent (heartbeat-driven). See §9.6 INTELLIGENCE_UNIT.
+
+### 5.18 SOT-KEEPER: Source of Truth Keeper
+
+- **id:** `sot-keeper`
+- **role:** Keep SYSTEM_INDEX.md and OVERVIEW.th.md in sync with openclaw.json, ANTIGRAVITY.md, DetailHardware.md, and agents/workspace-\*; heartbeat checks diff, updates index/overview only; requests commit via git-ops; does not edit ANTIGRAVITY.md or openclaw.json
+- **workspace:** `~/.openclaw/workspace-sot-keeper` (canonical in repo `agents/workspace-sot-keeper/`)
+- **model_primary:** `openrouter/google/gemini-2.5-flash`
+- **permissions:** `read`, `write` (SYSTEM_INDEX.md, OVERVIEW.th.md only), `exec`, `sessions_send`, `session_status`
+- **heartbeat:** `every: "6h"`
+- **lifecycle:** persistent (heartbeat-driven)
+
 ## 6. CRITICAL_FILE_MAP
 
 - `~/.openclaw/openclaw.json`: Global settings, agent list, gateway auth
@@ -284,11 +338,21 @@
 - `projects/openclaw/docs/AGENT_DESIGN_GUIDE.md`: Best practices for building AI agents
 - `projects/openclaw/docs/agents/git-ops-agent.md`: Git-ops agent runbook and guardrails (fork-only push, no PR)
 - `projects/openclaw/agents/workspace-git-ops/`: Canonical workspace files for `git-ops` (copy to `~/.openclaw/workspace-git-ops/` after `agents add`)
+- `projects/openclaw/agents/workspace-architect/`, `workspace-deploy/`, `workspace-monitor/`, `workspace-notifier/`, `workspace-intel/`, `workspace-sot-keeper/`: Canonical workspace files for architect, deploy, monitor, notifier, intel, sot-keeper
+- `~/.openclaw/knowledge-base/intel/`: Daily intel reports (YYYY-MM-DD.md)
 - `~/.openclaw`: State directory (Credentials, sessions, agent storage) — volume-mounted into container
 - `projects/openclaw/docker-compose.yml`: Docker service definition
 - `projects/openclaw/docker-compose.override.yml`: Local overrides (--tailscale off, bridge port) — gitignored
 - `projects/openclaw/.env`: Docker env vars (token, ports, image, config/workspace paths) — gitignored
 - `projects/openclaw/scripts/docker-rebuild.sh`: Rebuild image + recreate container in one command
+
+## 6b. SCRIPT_TOOLKIT (Script-First Pattern)
+
+- **Purpose:** ลดการใช้โทเคนโดยให้ agent เรียก shell script สำหรับงาน routine (health check, config validation, log scan, git preflight) แทนการให้ LLM ทำทุกครั้ง
+- **Registry:** `SCRIPTS_REGISTRY.md` — agent อ่านไฟล์นี้เพื่อดูว่ามีสคริปอะไรบ้างและเรียกอย่างไร
+- **Ops scripts:** `scripts/ops/` — health-check.sh, config-validate.sh, log-scan.sh, system-report.sh, git-preflight.sh, agent-list.sh (output JSON สำหรับ agent)
+- **Pattern:** Big model วางแผน/สั่งงาน → small model หรือ script ทำ execution. Heartbeat ของ monitor, father, mother, sunday, sot-keeper ควรรันสคริปก่อน; ถ้าผล OK ไม่ต้องใช้ LLM
+- **Optional timer:** `scripts/systemd-user/openclaw-health.timer` + `.service` รัน health-check ทุก 15 นาที แจ้ง Telegram เมื่อ critical; copy ไป `~/.config/systemd/user/` แล้ว enable
 
 ## 7. ACTIVE_ENVIRONMENT_STATE
 
@@ -296,7 +360,7 @@
 - **gateway_port:** `18789` (host)
 - **bridge_port:** `18791` (host) → `18790` (container)
 - **ui_allowed_origins:** [`https://home-server.taila0574b.ts.net`]
-- **active_agents:** [`mother`, `sunday`, `dev`, `father`, `researcher`, `log-analyzer`, `qa-tester`, `mother-relay`, `sain-evaluator`, `qa-reviewer`, `agora-host`, `red-team`, `coder`, `code-analyst`, `doc-writer`, `git-ops`]
+- **active_agents:** [`mother`, `sunday`, `dev`, `father`, `researcher`, `log-analyzer`, `qa-tester`, `mother-relay`, `sain-evaluator`, `qa-reviewer`, `agora-host`, `red-team`, `coder`, `code-analyst`, `doc-writer`, `git-ops`, `architect`, `deploy`, `monitor`, `notifier`, `intel`, `sot-keeper`]
 - **default_agent:** `sunday`
 - **orchestration:** `enabled` (maxConcurrent: 10)
 - **runtime:** systemd user service `openclaw-gateway.service` (primary)
@@ -558,6 +622,13 @@ Context: [Background, paths, relevant state]
 Constraints: [Scope, safety rules, tier limits]
 Deliverables: [Expected output format]
 ```
+
+### 9.6 INTELLIGENCE_UNIT (Self-Update Loop)
+
+- **intel agent** runs daily at 06:00 Asia/Bangkok; spawns **researcher** to gather from: OpenRouter models/pricing, OpenClaw GitHub releases, AI news, Hacker News, Reddit (r/MachineLearning, r/LocalLLaMA), GitHub trending.
+- **Synthesis:** intel writes `~/.openclaw/knowledge-base/intel/YYYY-MM-DD.md` and flags actionable items.
+- **Approval chain:** intel does not execute changes; it sends findings to **mother**. Mother applies decision matrix (model upgrade → update openclaw.json; security advisory → architect + notifier; package update → spawn father; technique update → backlog LOW; routine digest → notifier).
+- **Self-update boundary:** Model switch and SOUL.md changes require mother approval. Security patches: auto-forward to architect and notify user. No auto-update to production without qa-tester + monitor confirm when applicable.
 
 ## 10. INCIDENT_ESCALATION_PROTOCOL
 

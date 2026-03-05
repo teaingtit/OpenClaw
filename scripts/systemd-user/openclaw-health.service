@@ -1,0 +1,7 @@
+[Unit]
+Description=OpenClaw health check (script-only, notify on critical)
+
+[Service]
+Type=oneshot
+Environment=HOME=%h
+ExecStart=/home/teaingtit/projects/openclaw/scripts/ops/health-check.sh --format json --notify-on-critical
