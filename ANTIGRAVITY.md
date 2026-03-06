@@ -13,15 +13,17 @@
 <!-- Navigation guide — อ่านส่วนนี้ก่อนเสมอ เพื่อให้รู้ว่าต้องไปที่ section ไหน -->
 <!-- ไฟล์นี้ยาว — ใช้ตารางนี้หา section ที่ต้องการแทนการอ่านทั้งหมดตามลำดับ -->
 
-| หากต้องการ...                          | Section                                 |
-| -------------------------------------- | --------------------------------------- |
-| รู้ว่า agent ตัวไหนทำอะไร / model อะไร | §5 AGENT_DEFINITIONS                    |
-| เรียก agent / delegate งาน / spawn     | §9 AGENT_INTERACTION_RULES              |
-| เลือกโมเดลสำหรับ agent ใหม่            | §8 ROUTING_MODELS                       |
-| แก้ไข config / docker / restart        | §2 + §7                                 |
-| debug incident / escalate ปัญหา        | §10 INCIDENT_ESCALATION_PROTOCOL        |
-| ดู file paths สำคัญ                    | §6 CRITICAL_FILE_MAP                    |
-| สคริป routine / script-first ลดโทเคน   | §6b SCRIPT_TOOLKIT, SCRIPTS_REGISTRY.md |
+| หากต้องการ...                                         | Section                                 |
+| ----------------------------------------------------- | --------------------------------------- |
+| รู้ว่า agent ตัวไหนทำอะไร / model อะไร                | §5 AGENT_DEFINITIONS                    |
+| เรียก agent / delegate งาน / spawn                    | §9 AGENT_INTERACTION_RULES              |
+| เลือกโมเดลสำหรับ agent ใหม่                           | §8 ROUTING_MODELS                       |
+| แก้ไข config / docker / restart                       | §2 + §7                                 |
+| debug incident / escalate ปัญหา                       | §10 INCIDENT_ESCALATION_PROTOCOL        |
+| ดู file paths สำคัญ                                   | §6 CRITICAL_FILE_MAP                    |
+| สคริป routine / script-first ลดโทเคน                  | §6b SCRIPT_TOOLKIT, SCRIPTS_REGISTRY.md |
+| ลดโทเคนเรื่อง server (OS-only, ปิด Monitor heartbeat) | §10.1d SERVER_OS_ONLY_MODE              |
+| มาตรฐาน agent (script-first, รูปแบบเดียวกัน, ลดโทเคน) | §6 + docs/AGENT_STANDARD.md             |
 
 **⚠️ 3 กฎที่ต้องจำก่อนทำอะไรก็ตาม:**
 
@@ -83,7 +85,7 @@ Ollama runs on ryzenpc at `http://100.82.51.31:11434` (bind `0.0.0.0`). Gateway 
 - **BACK_LOG Bot:** การแจ้งเตือนทุกรูปแบบ (health, escalation, backup, power, ฯลฯ) ต้องส่งผ่านสคริปต์ `~/projects/openclaw/scripts/tg-notify.sh "ข้อความ"` เท่านั้น
 - ห้ามเรียก Telegram API โดยตรงหรือใช้ `TELEGRAM_BOT_TOKEN` สำหรับการแจ้งเตือน
 
-**คำสั่ง Manual ผ่าน Backlog Bot:** เจ้าของระบบสามารถสั่งปลุก/ปิด ryzenpc จากแชท Backlog ได้โดยส่ง `/wake_ryzenpc` หรือ `/sleep_ryzenpc` — ต้องรัน polling script บน minipc: `scripts/backlog-bot-commands.sh` (แนะนำ cron ทุก 2 นาที). ลงทะเบียนเมนูคำสั่งครั้งเดียว: `scripts/set-backlog-bot-commands.sh`. ดู SCRIPTS_REGISTRY.md § Backlog Telegram Bot
+**คำสั่ง Manual ผ่าน Backlog Bot:** เจ้าของระบบสามารถสั่งปลุก/ปิด ryzenpc จากแชท Backlog ได้โดยส่ง `/wake_ryzenpc` หรือ `/sleep_ryzenpc` — ต้องรัน polling script บน minipc: `scripts/backlog-bot-commands.sh` (cron ทุก 2 นาที). ลงทะเบียนเมนูคำสั่งครั้งเดียว: `scripts/set-backlog-bot-commands.sh`. **ความปลอดภัย:** ต้องตั้ง `TG_BACKLOG_ALLOWED_UID` ใน `~/.openclaw/.env` เป็น Telegram user ID ของเจ้าของ — สคริปต์ปฏิเสธคำสั่งจาก user อื่นในห้องเดียวกัน. ดู SCRIPTS_REGISTRY.md § Backlog Telegram Bot
 
 ## 4. TECH_STACK
 
@@ -305,7 +307,7 @@ Ollama runs on ryzenpc at `http://100.82.51.31:11434` (bind `0.0.0.0`). Gateway 
 - **workspace:** `~/.openclaw/workspace-monitor` (canonical in repo `agents/workspace-monitor/`)
 - **model_primary:** `openrouter/google/gemini-2.5-flash`
 - **permissions:** `read`, `exec`, `sessions_send`, `session_status`
-- **heartbeat:** every 15m (config in openclaw.json)
+- **heartbeat:** every 15m (config in openclaw.json). **เมื่อใช้ openclaw-health.timer (OS-only server):** ตั้ง `heartbeat.every` เป็น `"24h"` หรือปิด เพื่อลดโทเคน — งาน server ทำโดยสคริปต์ระดับ OS แล้ว (§6b, §10.1c).
 - **lifecycle:** persistent (heartbeat-driven)
 
 ### 5.16 NOTIFIER: Telegram Notification Dispatcher
@@ -343,10 +345,13 @@ Ollama runs on ryzenpc at `http://100.82.51.31:11434` (bind `0.0.0.0`). Gateway 
 - `~/.openclaw/openclaw.json`: Global settings, agent list, gateway auth
 - `projects/openclaw/.antigravityrules`: Critical operating standards for AI
 - `projects/openclaw/docs/AGENT_DESIGN_GUIDE.md`: Best practices for building AI agents
+- `projects/openclaw/docs/AGENT_STANDARD.md`: Single agent standard (workspace files, script-first heartbeat, TOOLS sync, invocation format)
 - `projects/openclaw/docs/agents/git-ops-agent.md`: Git-ops agent runbook and guardrails (fork-only push, no PR)
 - `projects/openclaw/agents/workspace-git-ops/`: Canonical workspace files for `git-ops` (copy to `~/.openclaw/workspace-git-ops/` after `agents add`)
 - `projects/openclaw/docs/workflows/local-inference.md`: Local inference (Ollama on ryzenpc) routing and VRAM/concurrency
 - `projects/openclaw/docs/workflows/n8n/`: n8n workflow templates (Ollama Task Router: coding/reasoning/vision/embedding/general/math/translation; Document Processing, Daily Health, SAIN local model)
+- `projects/openclaw/docs/AGENT_SCRIPT_FIRST.md`: Agent ↔ script mapping; ใช้สคริปต์แทนงาน routine, เรียก agent เมื่อจำเป็น
+- `projects/openclaw/docs/HEALTH_ESCALATION.md`: เมื่อสคริปต์แก้ไม่ได้ → เขียน health-escalation-pending.json; agent อ่านแล้วลองแก้, ส่ง Telegram เฉพาะเมื่อ agent แก้ได้หรือแก้ไม่ได้
 - `projects/openclaw/agents/workspace-architect/`, `workspace-deploy/`, `workspace-monitor/`, `workspace-notifier/`, `workspace-intel/`, `workspace-sot-keeper/`: Canonical workspace files for architect, deploy, monitor, notifier, intel, sot-keeper
 - `~/.openclaw/knowledge-base/intel/`: Daily intel reports (YYYY-MM-DD.md)
 - `~/.openclaw`: State directory (Credentials, sessions, agent storage) — volume-mounted into container
@@ -358,10 +363,11 @@ Ollama runs on ryzenpc at `http://100.82.51.31:11434` (bind `0.0.0.0`). Gateway 
 ## 6b. SCRIPT_TOOLKIT (Script-First Pattern)
 
 - **Purpose:** ลดการใช้โทเคนโดยให้ agent เรียก shell script สำหรับงาน routine (health check, config validation, log scan, git preflight) แทนการให้ LLM ทำทุกครั้ง
-- **Registry:** `SCRIPTS_REGISTRY.md` — agent อ่านไฟล์นี้เพื่อดูว่ามีสคริปอะไรบ้างและเรียกอย่างไร
-- **Ops scripts:** `scripts/ops/` — health-check.sh, config-validate.sh, log-scan.sh, system-report.sh, git-preflight.sh, agent-list.sh (output JSON สำหรับ agent)
+- **Registry:** `SCRIPTS_REGISTRY.md` — agent อ่านไฟล์นี้เพื่อดูว่ามีสคริปอะไรบ้างและเรียกอย่างไร. **Agent ↔ สคริปต์ และเมื่อไหร่เรียก agent:** `docs/AGENT_SCRIPT_FIRST.md`
+- **Ops scripts:** `scripts/ops/` — health-check.sh, gateway-recovery.sh (restart gateway + health-check + log tail), **health-check-fix-or-escalate.sh** (พบ error → รันสคริปต์แก้ → ถ้าหายเงียบ; ถ้าไม่หายเขียน `~/.openclaw/health-escalation-pending.json` ไม่ส่ง Telegram — agent อ่านแล้วลองแก้, ส่ง Telegram เฉพาะเมื่อ agent แก้ได้หรือ agent แก้ไม่ได้ ดู `docs/HEALTH_ESCALATION.md`), **post-reboot-diagnosis.sh** (หาสาเหตุ server ล่มหลัง manual reboot — อ่าน journalctl -b -1 หา OOM/panic), config-validate.sh, log-scan.sh, system-report.sh, git-preflight.sh, agent-list.sh (output JSON สำหรับ agent)
 - **Pattern:** Big model วางแผน/สั่งงาน → small model หรือ script ทำ execution. Heartbeat ของ monitor, father, mother, sunday, sot-keeper ควรรันสคริปก่อน; ถ้าผล OK ไม่ต้องใช้ LLM
-- **Optional timer:** `scripts/systemd-user/openclaw-health.timer` + `.service` รัน health-check ทุก 15 นาที แจ้ง Telegram เมื่อ critical; copy ไป `~/.config/systemd/user/` แล้ว enable
+- **OS-level recovery (จำเป็นสำหรับกู้ gateway):** Agent (Monitor → Mother) รัน**ภายใน gateway** หรือต้องใช้ gateway เพื่อ spawn Father — เมื่อ **gateway เองล่มหรือ restart loop** agent จะรันไม่ได้ จึงกู้คืนเองไม่ได้. การกู้ต้องทำที่ **ระดับ OS**: ใช้ systemd timer รัน **health-check-fix-or-escalate.sh** ทุก 15 นาที. Script รัน health-check → ถ้าไม่ ok รัน gateway-recovery.sh → ตรวจซ้ำ → ถ้าหาย exit 0 เงียบ; ถ้ายังไม่หายเขียน `~/.openclaw/health-escalation-pending.json` (ไม่ส่ง Telegram). Agent อ่านไฟล์นี้แล้วลองแก้; **ส่ง Telegram เฉพาะเมื่อ agent แก้ได้หรือ agent แก้ไม่ได้** (ดู `docs/HEALTH_ESCALATION.md`). Timer: `scripts/systemd-user/openclaw-health.timer` + `.service`. Copy ไป `~/.config/systemd/user/` แล้ว `systemctl --user enable --now openclaw-health.timer`.
+- **Server health แบบ OS-only (ลดโทเคนสูงสุด):** เมื่อ **openclaw-health.timer เปิดอยู่** งานที่เกี่ยวกับ server (health check, CRITICAL → recovery, แจ้ง Telegram) ทำโดยสคริปต์ระดับ OS ทั้งหมด — **ไม่ต้องใช้ Monitor agent**. แนะนำ: **ปิดหรือลด Monitor heartbeat** ใน `openclaw.json` (ตั้ง `heartbeat.every` ของ monitor เป็น `"24h"` หรือปิด) เพื่อไม่ให้ Monitor ถูกเรียกทุก 15 นาที; จะลดการใช้โทเคนได้มาก. Monitor ยังใช้ได้เมื่อ Mother/คนสั่ง spawn เพื่อตรวจเพิ่มหรือวิเคราะห์ anomaly แบบละเอียด.
 
 ## 7. ACTIVE_ENVIRONMENT_STATE
 
@@ -375,7 +381,8 @@ Ollama runs on ryzenpc at `http://100.82.51.31:11434` (bind `0.0.0.0`). Gateway 
 - **runtime:** systemd user service `openclaw-gateway.service` (primary)
 - **systemd_service:** enabled — gateway runs via systemd; use `systemctl --user enable --now openclaw-gateway.service`
 - **Docker gateway:** opt-in only — use profile `docker-gateway` to run gateway in Docker; do not start when systemd is primary (port 18789 conflict). See §7.0.
-- **n8n:** Workflow automation on minipc — container `sain-n8n` port `5678` (PostgreSQL backend, Basic Auth). Access: `http://100.96.9.50:5678`. Workflow templates: `docs/workflows/n8n/`. Ollama (ryzenpc) in workflows: `http://100.82.51.31:11434`. After Docker restart, reconnect network: `docker network connect sain_network sain-n8n` then `docker restart sain-n8n`.
+- **n8n:** Workflow automation on minipc — container `sain-n8n` port `5678` (PostgreSQL backend, Basic Auth). Image: `docker.n8n.io/n8nio/n8n:latest` (current 2.10.3). Access: `http://100.96.9.50:5678`. Workflow templates: `docs/workflows/n8n/`. Ollama (ryzenpc) in workflows: `http://100.82.51.31:11434`. **Update:** pull `docker.n8n.io/n8nio/n8n:latest`, stop/rm `sain-n8n`, recreate with same env/volumes/network. After Docker restart, reconnect network: `docker network connect sain_network sain-n8n` then `docker restart sain-n8n`.
+- **Open WebUI:** Web UI for Ollama on minipc — container `open-webui` port `3000` (UI) → Ollama on ryzenpc `http://100.82.51.31:11434`. Image: `ghcr.io/open-webui/open-webui:main`. Access: `http://100.96.9.50:3000`. Setup: `docs/workflows/open-webui/` (compose: `docker compose -f docs/workflows/open-webui/docker-compose.example.yml up -d`). First run: create admin user in UI. Requires minipc and ryzenpc on same Tailscale; if connection fails, try `network_mode: host` and use port 8080.
 
 ## 7.0 GATEWAY_SINGLE_RUNTIME (systemd vs Docker)
 
@@ -658,6 +665,31 @@ Agent (self-resolve, 1 retry)
           → The Architect fixes code/config
             → Update incident Status: resolved | mark lessons-learned
 ```
+
+### 10.1b SERVER_CRASH_AFTER_REBOOT (manual reboot)
+
+หลังรีบูทเซิร์ฟเวอร์ด้วยมือ ให้รันบน host ที่ reboot เพื่อหาสาเหตุ (OOM, kernel panic, power/watchdog):
+
+- `bash scripts/ops/post-reboot-diagnosis.sh` — แสดง log boot ก่อนหน้า + สรุปสาเหตุที่เป็นไปได้
+- `journalctl -b -1 -n 500` — ดู log เต็มของ boot ก่อนหน้า
+- `journalctl -b -1 -p err` — เฉพาะระดับ error ขึ้นไป
+
+สคริปลงทะเบียนใน SCRIPTS_REGISTRY.md (§ Ops Scripts).
+
+**สาเหตุที่พบบ่อย (จาก log):** ไม่ใช่ OOM/panic — **gateway port conflict + systemd restart loop**: process เดิม (เช่น pid ค้าง) ยึด port 18789 อยู่แล้ว แต่ systemd พยายาม start gateway ใหม่ → bind ไม่ได้ → exit 1 → systemd restart วนซ้ำ (restart counter พุ่ง). แก้: รัน `scripts/ops/gateway-recovery.sh` เพื่อ free port แล้ว start ใหม่. **ป้องกัน:** (1) Unit ที่ generate จาก `openclaw gateway install` มี **ExecStartPre** ที่ free port 18789 ก่อน start แล้ว (ใน `src/daemon/systemd-unit.ts`); ถ้าใช้ unit เก่า ให้ reinstall: `openclaw gateway install --force`. (2) สคริปต์ `scripts/ops/free-gateway-port.sh` ใช้รันเองหรือใส่ใน drop-in ได้. (3) ใช้ gateway runtime เดียวต่อ host (systemd **หรือ** Docker ไม่รันพร้อมกัน).
+
+### 10.1c WHY_AGENTS_DID_NOT_RECOVER (และแก้อย่างไร)
+
+- **ทำไม Agent (Monitor/Mother) ถึงไม่กู้ server ได้:** Monitor รันจาก **heartbeat ภายใน gateway**; เมื่อ gateway ล่มหรือ restart loop กระบวนการ gateway ไม่อยู่ตัว จึงไม่มี agent ใดรันได้. Mother ต้องใช้ gateway เพื่อ spawn Father หรือสั่ง recovery — ถ้า gateway ดับ วงจรนี้ทำงานไม่ได้. ดังนั้น **การกู้เมื่อ gateway เองเป็นปัญหา ต้องทำที่ระดับ OS ไม่ใช่โดย agent**.
+- **การออกแบบที่ถูก:** ใช้ **systemd timer** (ไม่ขึ้นกับ gateway) รัน health-check ทุก 15 นาที; ถ้า CRITICAL ให้ **รัน gateway-recovery.sh อัตโนมัติ**. สคริปต์ `health-check-and-recover.sh` ทำหน้าที่นี้; service ของ timer ต้องชี้ไปที่ script นี้ และ **ต้อง enable timer** บน host ที่รัน gateway จึงจะมีการกู้อัตโนมัติ.
+- **ตรวจสอบ:** `systemctl --user list-timers` ควรเห็น `openclaw-health.timer`; ถ้าไม่มี ให้ copy `scripts/systemd-user/openclaw-health.*` ไป `~/.config/systemd/user/` แล้ว `systemctl --user enable --now openclaw-health.timer`.
+
+### 10.1d SERVER_OS_ONLY_MODE (ลดโทเคนเรื่อง server)
+
+เมื่อ **openclaw-health.timer เปิดอยู่** งาน server (health check, กู้ gateway, แจ้ง Telegram เมื่อ CRITICAL) ทำโดยสคริปต์ระดับ OS ทั้งหมด. เพื่อลดการใช้โทเคนให้มากที่สุด:
+
+1. เปิด timer ตาม §10.1c (ต้องทำอยู่แล้วถ้าต้องการ auto-recovery).
+2. **ปิดหรือลด Monitor heartbeat:** ใน `openclaw.json` ตั้ง `agents.entries[monitor].heartbeat.every` เป็น `"24h"` หรือลบ/ปิด heartbeat — Monitor จะไม่ถูกเรียกทุก 15 นาที; งาน server ไม่ใช้โทเคนจาก agent อีก. ดู §6b.
 
 ### 10.2 INCIDENT_RECORD_FORMAT
 

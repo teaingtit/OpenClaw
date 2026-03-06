@@ -49,6 +49,9 @@ export function buildSystemdUnit({
     ? `WorkingDirectory=${systemdEscapeArg(workingDirectory)}`
     : null;
   const envLines = renderEnvLines(environment);
+  // Free port before start to prevent restart loop when an orphan still holds the port (see ANTIGRAVITY §10.1b).
+  const execStartPre =
+    '-/bin/sh -c \'port=${OPENCLAW_GATEWAY_PORT:-18789}; pids=$(ss -ltnp 2>/dev/null | grep ":$port " | sed -n "s/.*pid=\\([0-9]*\\).*/\\1/p"); for p in $pids; do [ -n "$p" ] && kill -9 "$p" 2>/dev/null; done; sleep 1; true\'';
   return [
     "[Unit]",
     descriptionLine,
@@ -56,6 +59,7 @@ export function buildSystemdUnit({
     "Wants=network-online.target",
     "",
     "[Service]",
+    `ExecStartPre=${execStartPre}`,
     `ExecStart=${execStart}`,
     "Restart=always",
     "RestartSec=5",

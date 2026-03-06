@@ -4,7 +4,8 @@
 # Exit code: 0 = all OK, 1 = warning, 2 = critical
 #
 # Usage: health-check.sh [--format json|verbose] [--notify-on-critical]
-# When critical and --notify-on-critical (or default when run from timer), calls tg-notify.sh
+# When critical and --notify-on-critical (e.g. from timer), calls tg-notify.sh
+# Optional env: OPENCLAW_HEALTH_ERROR_WARN (default 10), OPENCLAW_HEALTH_ERROR_CRITICAL (default 60)
 
 set -euo pipefail
 
@@ -12,6 +13,9 @@ GATEWAY_PORT="${OPENCLAW_GATEWAY_PORT:-18789}"
 DISK_WARN_PCT=85
 MEM_WARN_PCT=90
 LOG_MINUTES=15
+# Log error counts: warning above ERROR_WARN, critical above ERROR_CRITICAL (avoids CRITICAL from routine log noise)
+ERROR_WARN="${OPENCLAW_HEALTH_ERROR_WARN:-10}"
+ERROR_CRITICAL="${OPENCLAW_HEALTH_ERROR_CRITICAL:-60}"
 WORKER_IP="${OPENCLAW_WORKER_IP:-192.168.1.27}"
 SSH_CONFIG="${OPENCLAW_FATHER_SSH_CONFIG:-$HOME/.openclaw/workspace-father/ssh_config}"
 WORKER_HOST="${OPENCLAW_WORKER_HOST:-ryzenpc}"
@@ -20,7 +24,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 NOTIFY_SCRIPT="$REPO_ROOT/scripts/tg-notify.sh"
 FORMAT="json"
-NOTIFY_ON_CRITICAL=true
+# Default false: only notify when explicitly requested (e.g. from systemd timer via health-check-and-recover.sh --notify-on-critical)
+NOTIFY_ON_CRITICAL=false
 
 for arg in "$@"; do
   case "$arg" in
@@ -41,12 +46,28 @@ if ss -ltnp 2>/dev/null | grep -q ":$GATEWAY_PORT "; then
   gateway_port="up"
 fi
 
-# Gateway systemd service (user)
+# Gateway systemd service (user): use ActiveState so we get a definite value (active/inactive/failed)
+# When systemctl --user is unavailable (e.g. no user session), infer from port
 gateway_svc="unknown"
-if systemctl --user is-active --quiet openclaw-gateway.service 2>/dev/null; then
-  gateway_svc="active"
-elif systemctl --user is-active openclaw-gateway.service 2>/dev/null | grep -q inactive; then
-  gateway_svc="inactive"
+if command -v systemctl >/dev/null 2>&1; then
+  raw_state=$(systemctl --user show openclaw-gateway.service -p ActiveState --value 2>/dev/null || true)
+  case "${raw_state:-}" in
+    active)   gateway_svc="active" ;;
+    inactive|failed) gateway_svc="inactive" ;;
+    activating|deactivating) gateway_svc="$raw_state" ;;
+    *) [ -z "$raw_state" ] && gateway_svc="unknown" || gateway_svc="$raw_state" ;;
+  esac
+fi
+# If still unknown but port is up, service is likely managed outside systemd or user session not available
+if [ "$gateway_svc" = "unknown" ] && [ "$gateway_port" = "up" ]; then
+  gateway_svc="up (port)"
+fi
+
+# Restart count (detect restart loop: many restarts = port conflict loop or crash loop)
+gateway_restarts=0
+if command -v systemctl >/dev/null 2>&1; then
+  gateway_restarts=$(systemctl --user show openclaw-gateway.service -p NRestarts --value 2>/dev/null || echo 0)
+  [[ "$gateway_restarts" =~ ^[0-9]+$ ]] || gateway_restarts=0
 fi
 
 # Docker: count running vs total (optional)
@@ -77,17 +98,19 @@ if command -v free >/dev/null 2>&1; then
   fi
 fi
 
-# Gateway log errors (last N minutes) — tail last 500 lines then grep
+# Gateway log errors: count only lines that look like real errors (avoid "error: 0", "No error", etc.)
+# Pattern: ERROR (word), [error], Error:, or common codes (ECONNREFUSED, ETIMEDOUT, EACCES, ENOENT, OOM, FATAL)
+ERROR_GREP='\bERROR\b|\[error\]|\bError:|ECONNREFUSED|ETIMEDOUT|EACCES|ENOENT|OOM|FATAL'
 errors=0
 warnings=0
-log_path="/tmp/openclaw-gateway.log"
+log_path="${OPENCLAW_GATEWAY_LOG:-/tmp/openclaw-gateway.log}"
 if [ -f "$log_path" ]; then
-  errors=$(tail -n 500 "$log_path" 2>/dev/null | grep -cE "ERROR|\[error\]|error:|Error" || true)
+  errors=$(tail -n 500 "$log_path" 2>/dev/null | grep -cE "$ERROR_GREP" || true)
   warnings=$(tail -n 500 "$log_path" 2>/dev/null | grep -cE "WARN|\[warn\]|warning" || true)
 fi
-# Fallback: journalctl
+# Fallback: journalctl (same pattern)
 if command -v journalctl >/dev/null 2>&1; then
-  j_errors=$(journalctl --user -u openclaw-gateway.service --since "${LOG_MINUTES} min ago" --no-pager 2>/dev/null | grep -cE "ERROR|error|Error" || true)
+  j_errors=$(journalctl --user -u openclaw-gateway.service --since "${LOG_MINUTES} min ago" --no-pager 2>/dev/null | grep -cE "$ERROR_GREP" || true)
   j_warnings=$(journalctl --user -u openclaw-gateway.service --since "${LOG_MINUTES} min ago" --no-pager 2>/dev/null | grep -cE "WARN|warn|warning" || true)
   [ "${j_errors:-0}" -gt "$errors" ] && errors=$j_errors
   [ "${j_warnings:-0}" -gt "$warnings" ] && warnings=$j_warnings
@@ -110,26 +133,32 @@ if [ "$gateway_port" != "up" ] || [ "$gateway_svc" = "inactive" ]; then
 elif [ "$disk_pct" -ge "$DISK_WARN_PCT" ] || [ "$mem_pct" -ge "$MEM_WARN_PCT" ]; then
   [ "$exit_code" -lt 2 ] && { status="warning"; exit_code=1; }
 fi
-if [ "$errors" -gt 5 ]; then
+if [ "$errors" -gt "$ERROR_WARN" ]; then
   [ "$exit_code" -lt 2 ] && { status="warning"; exit_code=1; }
 fi
-if [ "$errors" -gt 20 ]; then
+if [ "$errors" -gt "$ERROR_CRITICAL" ]; then
+  status="critical"
+  exit_code=2
+fi
+# Restart loop: very high restarts indicate port conflict or crash loop (agent cannot recover; OS timer must)
+if [ "${gateway_restarts:-0}" -gt 50 ]; then
   status="critical"
   exit_code=2
 fi
 
 # --- Output ---
-json=$(printf '{"ts":"%s","gateway":"%s","gateway_svc":"%s","docker":"%s","disk_pct":%s,"disk_mount":"%s","mem_pct":%s,"errors":%s,"warnings":%s,"worker":"%s","status":"%s"}' \
-  "$ts" "$gateway_port" "$gateway_svc" "$docker_status" "$disk_pct" "$disk_mount" "$mem_pct" "$errors" "$warnings" "$worker" "$status")
+json=$(printf '{"ts":"%s","gateway":"%s","gateway_svc":"%s","gateway_restarts":%s,"docker":"%s","disk_pct":%s,"disk_mount":"%s","mem_pct":%s,"errors":%s,"warnings":%s,"worker":"%s","status":"%s"}' \
+  "$ts" "$gateway_port" "$gateway_svc" "${gateway_restarts:-0}" "$docker_status" "$disk_pct" "$disk_mount" "$mem_pct" "$errors" "$warnings" "$worker" "$status")
 
 if [ "$FORMAT" = "verbose" ]; then
   echo "Health Check — $ts"
   echo "  Gateway port ($GATEWAY_PORT): $gateway_port"
   echo "  Gateway service:    $gateway_svc"
+  echo "  Gateway restarts:   ${gateway_restarts:-0}"
   echo "  Docker:             $docker_status"
   echo "  Disk ($disk_mount): ${disk_pct}%"
   echo "  Memory:             ${mem_pct}%"
-  echo "  Log errors (${LOG_MINUTES}m): $errors"
+  echo "  Log errors (${LOG_MINUTES}m): $errors (warn>$ERROR_WARN critical>$ERROR_CRITICAL)"
   echo "  Log warnings:       $warnings"
   echo "  Worker:             $worker"
   echo "  Status:             $status"

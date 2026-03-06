@@ -1,8 +1,8 @@
 [Unit]
-Description=OpenClaw health check (script-only, notify on critical)
+Description=OpenClaw health check: fix first, notify only if still broken
 
 [Service]
 Type=oneshot
 Environment=HOME=%h
-ExecStart=/home/teaingtit/projects/openclaw/scripts/ops/health-check.sh --format json --notify-on-critical
-SuccessExitStatus=1 2
+ExecStart=/home/teaingtit/projects/openclaw/scripts/ops/health-check-fix-or-escalate.sh
+SuccessExitStatus=0 1 2

@@ -1,4 +1,5 @@
 # HEARTBEAT.md — Intel Agent
 
-- **Heartbeat:** Daily at 06:00 Asia/Bangkok (e.g. `every: "24h"`, `at: "06:00"`, `timezone: "Asia/Bangkok"` in openclaw.json).
-- **Action:** Run daily intel sweep (spawn researcher, synthesize, report, digest).
+- **Schedule:** Daily (e.g. `every: "24h"` in openclaw.json; gateway may not support `at`/`timezone` — use cron if fixed 06:00 Bangkok needed).
+- **Task:** Daily intel sweep: spawn researcher (batched where possible to reduce spawn overhead), synthesize, write `~/.openclaw/knowledge-base/intel/YYYY-MM-DD.md`, send actionable items to mother, send digest to notifier.
+- **Token note:** No script replaces full sweep; keep one synthesis pass and batched spawns to limit token use.

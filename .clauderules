@@ -12,3 +12,47 @@ Instead of modifying the file directly, you MUST instruct the user to use the of
 - To fix errors: `openclaw doctor --fix`
 
 **AGAIN: DO NOT USE `cat <<EOF > ~/.openclaw/openclaw.json` OR ANY FILE WRITE COMMAND ON `openclaw.json`. DO NOT OVERWRITE IT.**
+
+---
+
+## Project context and source of truth
+
+- **Understand the project:** Read **SYSTEM_INDEX.md** first for a quick agent/path reference, then **ANTIGRAVITY.md** for full architecture, agents, config, and runbooks. Use them as the source of truth; do not guess.
+- **Keep ANTIGRAVITY.md updated:** When you change architecture, config, agents, or runtime setup, update ANTIGRAVITY.md so it stays in sync.
+- **Hardware and devices:** Read **DetailHardware.md** for hardware setup (nodes, network, SSH, roles). Update it when you change anything about hardware or devices.
+- **Repo:** openclaw/openclaw. Use **repo-root-relative paths** in replies (e.g. `src/cli/index.ts`). No absolute or `~/` paths.
+- **Docs:** Mintlify at docs.openclaw.ai. Internal doc links: root-relative, no `.md` suffix.
+- **Canonical rules:** Read **AGENTS.md** and **.antigravityrules** before broad system or config changes. Do not guess; reference those files.
+
+## Always apply
+
+1. **No guessing** — Before architecture/config analysis, read ANTIGRAVITY.md or .antigravityrules. Check `memory/errors/` for past failures.
+2. **Config safety** — Never overwrite `openclaw.json` with write/cat. Use `openclaw config set ...`, `openclaw agents set-identity ...`, or `openclaw doctor --fix` for repair.
+3. **GitHub** — For issue/PR comments that contain backticks or shell chars, use heredoc: `-F - <<'EOF'`. Do not wrap issue/PR refs like #123 in backticks when linking.
+4. **Security** — Read SECURITY.md before triage/severity. No real credentials, phone numbers, or live config in commits or docs.
+
+## Agent creation and validation
+
+- New agents: full workspace (SOUL.md, AGENTS.md, IDENTITY.md, TOOLS.md), correct openclaw.json (tool access, sandbox mode), clear step-by-step logic in SOUL.md.
+- Before concluding: verify registration and restart gateway; agent appears via CLI; ANTIGRAVITY.md updated.
+- Validation checklist: see .antigravityrules RULE_AGENT_VALIDATION_CHECKLIST (workspace files, config_validation, content_quality, system_verified).
+- TOOLS.md must have a Tool Access Policy; allowed tools must match `tools.allow` in openclaw.json. Document tool calls as JSON, not CLI.
+- Agents that spawn or message other agents need in openclaw.json: `subagents.allowAgents`, `tools.sessions.visibility`, `tools.agentToAgent.enabled`, and the relevant tools in `tools.allow`.
+
+## Model and routing
+
+- **Model strings** must start with `openrouter/` for cloud (e.g. `openrouter/anthropic/claude-sonnet-4.6`). Bare `anthropic/...` or `openai/...` fails (no direct API keys).
+- **Non-persistent agents** (e.g. `dev`, `father`) do not appear in `sessions_list` between invocations — this is normal. Always invoke them via `sessions_spawn` with `agentId` set; do not fall back to a generic sub-agent.
+
+## Verification before concluding
+
+- After agent/config changes: confirm gateway restart and agent visibility via CLI when relevant.
+- After doc or config edits: ensure ANTIGRAVITY.md and openclaw.json stay consistent where they overlap.
+- Before release/version bumps: get explicit operator consent; do not publish or change versions without permission.
+
+## Avoid
+
+- Prototype mutation for shared behavior; use explicit inheritance/composition.
+- `@ts-nocheck` or disabling `no-explicit-any`; fix root causes.
+- Adding plugin-only deps to root package.json; keep them in the extension's package.json.
+- Stashing or switching branches unless the user explicitly asks.

@@ -1,6 +1,21 @@
 # [SYSTEM_RULES] Antigravity Operations
 > กฎเหล็กสำหรับการทำงานของ AI Assistant ในโปรเจกต์นี้ (ต้องปฏิบัติตามอย่างเคร่งครัด)
 
+---
+
+## 0. RULE_ANTI_HALLUCINATION (ห้ามหลอน — อ่านก่อนตอบเสมอ)
+
+> **หลักเหล็ก:** ข้อมูลที่ไม่มีใน repo / config / memory = ห้ามสร้างขึ้นมาเอง ถ้าไม่แน่ใจหรือหาไม่เจอ = บอกตรงๆ ว่า "ไม่พบข้อมูลใน [files ที่เช็คแล้ว]"
+
+- **cite_before_claim:** ก่อนตอบข้อเท็จจริงใดๆ เกี่ยวกับระบบ (path, config key, agent id, model string, API) ต้อง **อ้างอิงจากไฟล์ที่อ่านได้** (ANTIGRAVITY.md, openclaw.json, SOUL.md, ฯลฯ). ห้ามใช้แค่ความรู้จาก training data เป็นหลัก.
+- **data_priority:** ลำดับความจริงคือ `openclaw.json` (สถานะจริง) > `ANTIGRAVITY.md` (design) > `memory/` (ประวัติ) > ความรู้จาก model. ห้ามใช้ความรู้จาก model แทนข้อมูลใน repo/config.
+- **i_dont_know_gate:** ถ้าค้นใน repo แล้วไม่เจอ → ตอบว่า **"ไม่พบข้อมูลใน [รายการไฟล์/path ที่เช็คแล้ว]"** ห้ามสมมติหรือ generate ค่าขึ้นมา (path, port, env var, agent list ฯลฯ).
+- **no_infer_paths:** Path, port, ชื่อ agent, config key ต้องอ่านจาก ANTIGRAVITY.md / SYSTEM_INDEX.md / openclaw.json / ไฟล์ใน repo เท่านั้น. ห้ามเดาจาก convention ทั่วไปหรือความเคยชินของระบบอื่น.
+- **no_infer_apis:** รูปแบบ API, tool call, CLI flag ต้องอ้างอิงจาก docs ใน repo หรือ source code ที่อ่านได้. ห้ามสมมติจากความจำว่า "น่าจะเป็นแบบนี้".
+- **before_answer_check:** ก่อนส่งคำตอบที่เกี่ยวกับสถาปัตยกรรม/config/agent: (1) อ่านไฟล์ที่เกี่ยวข้องแล้วหรือยัง (2) อ้างอิงบรรทัดหรือ section ได้หรือไม่ (3) ถ้าไม่แน่ใจ → ระบุว่า "ต้องตรวจจากไฟล์ X อีกครั้ง" หรือ "ไม่พบใน [files]".
+
+---
+
 ## 1. RULE_PERFECT_AGENT_CREATION
 > การสร้าง Agent ใหม่ต้องสมบูรณ์แบบ ห้ามมีข้อผิดพลาดและต้องพร้อมใช้งานทันที
 - **workspace_setup:** Create fully equipped workspace (`SOUL.md`, `AGENTS.md`, `IDENTITY.md`, `TOOLS.md`).
@@ -29,8 +44,9 @@
 ## 4. RULE_STATE_SYNCHRONIZATION
 > ไฟล์ ANTIGRAVITY.md คือ Source of Truth ห้ามเดาข้อมูลเอง ต้องอัปเดตและอ้างอิงไฟล์นี้เสมอ
 - **compulsory_updates:** Update `ANTIGRAVITY.md` immediately upon architecture/config changes.
-- **hallucination_prevention:** Always read `ANTIGRAVITY.md` before broad system analysis.
+- **hallucination_prevention:** Always read `ANTIGRAVITY.md` before broad system analysis. Never substitute pre-trained/model knowledge for actual repo or config state.
 - **consistency_check:** Ensure doc matches `openclaw.json` and host state.
+- **no_guess_fill:** If a value is missing from ANTIGRAVITY.md or openclaw.json, do NOT invent it; state "ไม่พบใน [files checked]" or ask the user to confirm.
 
 ## 5. RULE_ERROR_MEMORY
 > จดจำทุกข้อผิดพลาดเพื่อป้องกันการทำพลาดซ้ำซาก
@@ -39,7 +55,7 @@
 - **cross_agent_learning:** If systemic, update `ANTIGRAVITY.md` or `AGENT_DESIGN_GUIDE.md`.
 
 ## 6. RULE_AGENT_VALIDATION_CHECKLIST
-> ก่อนเริ่มใช้งาน Agent ใหม่ ต้องตรวจสอบ Checklist เหล่านี้ให้ผ่านทั้งหมด
+> ก่อนเริ่มใช้งาน Agent ใหม่ ต้องตรวจสอบ Checklist เหล่านี้ให้ผ่านทั้งหมด. See also `docs/AGENT_STANDARD.md` for a single agent standard (script-first, TOOLS sync, invocation format).
 - **workspace_files:**
   - `SOUL.md` (Identity, Rules)
   - `IDENTITY.md` (Metadata, Theme)
@@ -64,9 +80,10 @@
 
 ## 7. RULE_CONTEXT_INITIALIZATION
 > ห้ามเดาโครงสร้างระบบ ต้องอ่านไฟล์อ้างอิงค้นหาความจริงก่อนลงมือทำเสมอ
-- **mandatory_reading:** Read `ANTIGRAVITY.md` first.
+- **mandatory_reading:** Read `ANTIGRAVITY.md` first. Do not assume project structure, agent list, or config keys from memory alone.
 - **history_check:** Check `memory/errors/` for debugging.
-- **exploration:** Use `list_dir` or `grep_search` before assuming paths.
+- **exploration:** Use `list_dir` or `grep_search` before assuming paths. If a path is not found in repo, say so — do not invent.
+- **no_assume:** Never assume "this project probably has X" or "typically it would be at Y". Verify in repo or state "ไม่พบใน [sources checked]".
 
 ## 8. RULE_MODULAR_INSTRUCTIONS
 > แบ่งงานใหญ่เป็นขั้นตอนย่อยๆ ห้ามทำรวดเดียวโดยไม่ตรวจสอบประสิทธิผล
@@ -79,6 +96,7 @@
 - **constraint_check:** Verify S.M.A.R.T goals are met.
 - **rule_adherence:** Ensure compliance with `RULE_PEAK_PERFORMANCE` and `RULE_AI_OPTIMIZED_LANGUAGE`.
 - **runtime_validation:** Validate JSON/YAML via Python/CLI before applying.
+- **hallucination_check:** Before submitting: Did I cite a repo/config file for every factual claim? Did I invent any path, key, or value not present in sources? If unsure → state "ต้องตรวจจาก [file] อีกครั้ง" or "ไม่พบใน [sources]".
 
 ## 10. RULE_MODEL_PINNING_ROUTING
 > กำหนดโมเดลและช่องทางการสื่อสารให้ชัดเจน ห้ามปล่อยให้ระบบสุ่มเลือกเอง
@@ -206,3 +224,11 @@
 > ห้าม AI ใดๆ ก็ตาม (รวมถึง Agent เอง) เข้าไปยุ่มย่ามหรือเขียนทับไฟล์ `openclaw.json` โดยพลการเด็ดขาด
 - **safe_update:** ท่องไว้เสนอว่า **ห้ามใช้คำสั่ง `cat <<EOF > .../openclaw.json`** และห้ามใช้ Write File Operation ใดๆ เพื่อแก้ไข Config นี้ หากต้องจัดการ Config ให้ใช้ CLI Command อย่าง `openclaw agents set-identity ...` หรือ `openclaw config set ...` หรือแก้ไขผ่าน Node Modules แทนเสมอ
 - **escalation:** หากตรวจพบไฟล์ Config เสีย (JSON Invalid) ให้เรียกใช้ `openclaw doctor --fix` ทันที หากกู้คืนไม่ได้ให้แจ้งมนุษย์ (Sunday/Human) ห้ามพยายามสร้างไฟล์ Skeleton ขึ้นมาเขียนทับเองเพราะจะทำให้ Agent หายทั้งระบบ
+
+---
+
+## BOOKEND — Anti-hallucination reminder
+
+- **ห้ามหลอน:** ข้อมูลที่ไม่มีใน repo/config/memory = ห้ามสร้างขึ้นมา. ไม่แน่ใจ = บอก "ไม่พบใน [files checked]" หรือให้ user ยืนยัน.
+- **อ้างอิงก่อนตอบ:** path, config key, agent id, model string ต้องอ้างอิงจาก ANTIGRAVITY.md / openclaw.json / ไฟล์ใน repo. ห้ามใช้แค่ความรู้จาก model.
+- **ห้ามเขียน openclaw.json โดยตรง.** ใช้เฉพาะ `openclaw config set ...` / `openclaw agents set-identity ...` / `openclaw doctor --fix`.
