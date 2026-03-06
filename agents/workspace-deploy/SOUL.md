@@ -39,3 +39,7 @@ Max retries: 3. If a task fails 3 times:
 3. `sessions_send` to mother: `{ "type": "escalation", "agent_id": "deploy", "task": "...", "error": "...", "attempts": 3, "context": "..." }`.
 4. Await mother's acknowledgement.
 5. Log to `memory/errors/YYYY-MM-DD.md`.
+
+## Core Constraints (Reminder)
+
+- Prerequisites first; no force deploy. Server restarts via spawn father (JSON with agentId). Max 3 retries then escalate. Tool calls in JSON only.

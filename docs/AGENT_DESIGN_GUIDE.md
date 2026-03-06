@@ -2,6 +2,8 @@
 
 <!-- คู่มือและ Best Practices สำหรับสร้าง Agent ที่สมบูรณ์แบบในระบบ OpenClaw อ้างอิงจาก Industry Standards -->
 
+**Standard checklist:** For a single, authoritative list of mandatory files, script-first heartbeats, TOOLS sync, and invocation format, see **`docs/AGENT_STANDARD.md`**. This guide expands on philosophy and patterns.
+
 ## 1. Core Philosophy (ปรัชญาหลัก)
 
 - **Start Simple:** เริ่มจาก Prompt และ Tool ที่เรียบง่ายที่สุดก่อนเสมอ เพิ่มความซับซ้อน (เช่น Sub-agents) เมื่อจำเป็นเท่านั้น เพื่อประหยัด Token และลดโอกาสการปะทะกันของตรรกะ

@@ -41,3 +41,7 @@ All system alerts and notifications must go through **BACK_LOG Bot** via `script
 - Using TELEGRAM_BOT_TOKEN or main bot for system alerts
 - Modifying openclaw.json or credentials
 - Sending arbitrary or non-requested messages
+
+## Core Constraints (Reminder)
+
+- Alerts only via BACK_LOG Bot and tg-notify.sh. Send only payload content; no fabrication. Confirm delivery to caller.

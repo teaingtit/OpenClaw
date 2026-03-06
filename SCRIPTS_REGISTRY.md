@@ -1,21 +1,30 @@
 # SCRIPTS_REGISTRY — Available Shell Scripts for Agents
 
-> Agent: อ่านไฟล์นี้ก่อนเรียก LLM สำหรับงาน routine — ถ้ามีสคริปที่ทำได้ ให้ exec สคริปแล้วอ่านผลลัพธ์แทน
+> Agent: อ่านไฟล์นี้ก่อนเรียก LLM สำหรับงาน routine — ถ้ามีสคริปที่ทำได้ ให้ exec สคริปแล้วอ่านผลลัพธ์แทน  
+> **แมป Agent ↔ สคริปต์ และเมื่อไหร่เรียก Agent:** ดู `docs/AGENT_SCRIPT_FIRST.md`. **มาตรฐาน agent (script-first, TOOLS sync):** ดู `docs/AGENT_STANDARD.md`
 
 ## Ops Scripts (scripts/ops/)
 
-| Script             | แทนงานของ Agent       | วิธีเรียก                                                                                                          | Output        |
-| ------------------ | --------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------- |
-| health-check.sh    | monitor heartbeat     | `bash scripts/ops/health-check.sh` or `bash scripts/ops/health-check.sh --format json`                             | JSON          |
-| config-validate.sh | mother config check   | `bash scripts/ops/config-validate.sh`                                                                              | JSON          |
-| log-scan.sh        | sunday / log-analyzer | `bash scripts/ops/log-scan.sh --minutes 15`                                                                        | JSON          |
-| system-report.sh   | father system check   | `bash scripts/ops/system-report.sh`                                                                                | JSON          |
-| git-preflight.sh   | git-ops / sot-keeper  | `bash scripts/ops/git-preflight.sh --format json` or `--watch-list openclaw.json,ANTIGRAVITY.md,DetailHardware.md` | JSON          |
-| agent-list.sh      | mother agent count    | `bash scripts/ops/agent-list.sh --format json` or `--check-health`                                                 | JSON or table |
-| audit-agents.py    | mother / ops check    | `python3 scripts/ops/audit-agents.py`                                                                              | Text          |
-| fix-agents.py      | mother / ops repair   | `python3 scripts/ops/fix-agents.py` (แก้ tools.allow + เพิ่ม agents ที่ขาด ใน openclaw.json)                       | Text          |
+| Script                          | แทนงานของ Agent                                                                                                                                                                                                                                | วิธีเรียก                                                                                                                                                                                        | Output                           |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------- |
+| health-check.sh                 | monitor heartbeat                                                                                                                                                                                                                              | `bash scripts/ops/health-check.sh` or `bash scripts/ops/health-check.sh --format json`                                                                                                           | JSON                             |
+| health-check-and-recover.sh     | timer: health-check แล้วถ้า CRITICAL รัน gateway-recovery อัตโนมัติ (**server แบบ OS-only** — ลดโทเคน Monitor)                                                                                                                                 | `bash scripts/ops/health-check-and-recover.sh --format json --notify-on-critical`. ใช้โดย openclaw-health.service                                                                                | เหมือน health-check              |
+| health-check-fix-or-escalate.sh | **พบ error → รันสคริปต์แก้ → ถ้าหายเงียบ; ถ้าไม่หายเขียน `~/.openclaw/health-escalation-pending.json` (ไม่แจ้ง Telegram). Agent อ่านไฟล์แล้วลองแก้ — ส่ง Telegram เฉพาะเมื่อ agent แก้ได้หรือ agent แก้ไม่ได้** ดู `docs/HEALTH_ESCALATION.md` | `bash scripts/ops/health-check-fix-or-escalate.sh` (หรือ `--no-fix`, `--verbose`). Env: `OPENCLAW_FIX_SCRIPT`, `OPENCLAW_FIX_ARGS`, `OPENCLAW_POST_FIX_SLEEP`, `OPENCLAW_STATE_DIR`. ต้องมี `jq` | exit 0 เงียบ / เขียนไฟล์รอ agent |
+| gateway-recovery.sh             | restart + health-check                                                                                                                                                                                                                         | `bash scripts/ops/gateway-recovery.sh` (on gateway host). Use `--no-restart` to only check + show log; `--notify` to allow Telegram on critical                                                  | Text                             |
+| post-reboot-diagnosis.sh        | หาสาเหตุ server ล่มหลังรีบูท                                                                                                                                                                                                                   | `bash scripts/ops/post-reboot-diagnosis.sh` (on host ที่เพิ่ง reboot). ใช้ `--format json` สำหรับ agent; อ่าน journalctl -b -1 หา OOM/panic                                                      | Text / JSON                      |
+| free-gateway-port.sh            | คืน port 18789 ก่อน start gateway                                                                                                                                                                                                              | `bash scripts/ops/free-gateway-port.sh`. ใช้ใน ExecStartPre หรือรันก่อน start gateway เพื่อป้องกัน port conflict loop                                                                            | —                                |
+| config-validate.sh              | mother config check                                                                                                                                                                                                                            | `bash scripts/ops/config-validate.sh`                                                                                                                                                            | JSON                             |
+| log-scan.sh                     | sunday / log-analyzer                                                                                                                                                                                                                          | `bash scripts/ops/log-scan.sh --minutes 15`                                                                                                                                                      | JSON                             |
+| system-report.sh                | father system check                                                                                                                                                                                                                            | `bash scripts/ops/system-report.sh`                                                                                                                                                              | JSON                             |
+| git-preflight.sh                | git-ops / sot-keeper                                                                                                                                                                                                                           | `bash scripts/ops/git-preflight.sh --format json` or `--watch-list openclaw.json,ANTIGRAVITY.md,DetailHardware.md`                                                                               | JSON                             |
+| agent-list.sh                   | mother agent count                                                                                                                                                                                                                             | `bash scripts/ops/agent-list.sh --format json` or `--check-health`                                                                                                                               | JSON or table                    |
+| audit-agents.py                 | mother / ops check                                                                                                                                                                                                                             | `python3 scripts/ops/audit-agents.py`                                                                                                                                                            | Text                             |
+| fix-agents.py                   | mother / ops repair                                                                                                                                                                                                                            | `python3 scripts/ops/fix-agents.py` (แก้ tools.allow + เพิ่ม agents ที่ขาด ใน openclaw.json)                                                                                                     | Text                             |
+| notify-backlog.sh               | notifier (เมื่อข้อความพร้อม)                                                                                                                                                                                                                   | `bash scripts/ops/notify-backlog.sh --type alert --title "..." --body "..."` หรือ `--raw "ข้อความ"`. ใช้แทนการ spawn Notifier เมื่อมี title/body แล้ว                                            | —                                |
+| test-runner.sh                  | qa-tester (ผล pass/fail)                                                                                                                                                                                                                       | `bash scripts/ops/test-runner.sh --json` (รัน pnpm test, output JSON). เรียก QA-Tester เมื่อต้องตีความผลหรือรันชุดย่อย                                                                           | JSON                             |
+| usage-by-agent.ts               | ดูว่า agent ไหนใช้ token มาก (หาสาเหตุติด limit)                                                                                                                                                                                               | `pnpm exec node --import tsx scripts/ops/usage-by-agent.ts --hours 24` or `--days 1`; `--json` สำหรับ machine-readable                                                                           | Text / JSON                      |
 
-Paths: จาก repo root คือ `scripts/ops/<name>`. บน host ที่รัน gateway ใช้ path เต็มได้ เช่น `/home/teaingtit/projects/openclaw/scripts/ops/health-check.sh`.
+Paths: จาก repo root คือ `scripts/ops/<name>`. บน host ที่รัน gateway ใช้ path เต็มได้ เช่น `/home/teaingtit/projects/openclaw/scripts/ops/health-check.sh`. health-check.sh: กำหนด threshold ได้ด้วย env `OPENCLAW_HEALTH_ERROR_WARN` (default 10), `OPENCLAW_HEALTH_ERROR_CRITICAL` (default 60).
 
 ## Power Scripts (scripts/)
 
@@ -37,21 +46,24 @@ Paths: จาก repo root คือ `scripts/ops/<name>`. บน host ที่
 
 ## Notification
 
-| Script                      | วิธีเรียก                                                                                      |
-| --------------------------- | ---------------------------------------------------------------------------------------------- |
-| tg-notify.sh                | `bash scripts/tg-notify.sh "message"`                                                          |
-| backlog-bot-commands.sh     | `bash scripts/backlog-bot-commands.sh` (cron ทุก 2 นาที; รองรับ /wake_ryzenpc, /sleep_ryzenpc) |
-| set-backlog-bot-commands.sh | `bash scripts/set-backlog-bot-commands.sh` (รันครั้งเดียว เพื่อตั้งเมนู Backlog Bot)           |
+| Script       | วิธีเรียก                             |
+| ------------ | ------------------------------------- |
+| tg-notify.sh | `bash scripts/tg-notify.sh "message"` |
 
-## Backlog Telegram Bot (รับคำสั่ง Manual)
+## Backlog Telegram Bot (รับคำสั่ง Manual จาก User)
 
-| Script                      | วิธีเรียก                                                                                       |
-| --------------------------- | ----------------------------------------------------------------------------------------------- |
-| backlog-bot-commands.sh     | `bash scripts/backlog-bot-commands.sh` — รันแบบ cron ทุก 1–2 นาที เพื่อรับคำสั่งจาก Backlog bot |
-| set-backlog-bot-commands.sh | `bash scripts/set-backlog-bot-commands.sh` — ลงทะเบียนเมนูคำสั่งให้ Bot (รันครั้งเดียว)         |
+| Script                      | วิธีเรียก                                                                                     |
+| --------------------------- | --------------------------------------------------------------------------------------------- |
+| backlog-bot-commands.sh     | `bash scripts/backlog-bot-commands.sh` — รันแบบ cron ทุก 2 นาที เพื่อรับคำสั่งจาก Backlog bot |
+| set-backlog-bot-commands.sh | `bash scripts/set-backlog-bot-commands.sh` — ลงทะเบียนเมนูคำสั่งให้ Bot (รันครั้งเดียว)       |
 
-**คำสั่งใน Backlog Bot:** `/wake_ryzenpc` ปลุก ryzenpc, `/sleep_ryzenpc` ปิด ryzenpc, `/help` แสดงคำสั่ง  
-**Cron ตัวอย่าง (บน minipc):** `*/2 * * * * /home/teaingtit/projects/openclaw/scripts/backlog-bot-commands.sh`
+**คำสั่งที่รองรับ:** `/wake_ryzenpc` ปลุก ryzenpc, `/sleep_ryzenpc` ปิด ryzenpc, `/help`  
+**Cron (บน minipc):** `*/2 * * * * /home/teaingtit/projects/openclaw/scripts/backlog-bot-commands.sh`  
+**ENV ที่ต้องตั้งใน `~/.openclaw/.env`:**
+
+- `TG_BACKLOG_BOT_TOKEN` — token ของ Backlog Bot (บังคับ)
+- `TG_BACKLOG_CHAT_ID` — Chat ID ปลายทาง (optional; default 6845503187)
+- `TG_BACKLOG_ALLOWED_UID` — Telegram user ID ของ user ที่อนุญาต (**บังคับ** — ป้องกัน user อื่นในห้องสั่งงาน)
 
 ## Maintenance
 
