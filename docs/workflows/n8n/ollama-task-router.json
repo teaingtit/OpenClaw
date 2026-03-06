@@ -11,8 +11,7 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "ollama-task",
-        "responseMode": "responseNode",
-        "options": {}
+        "responseMode": "responseNode"
       }
     },
     {
@@ -26,13 +25,7 @@
         "url": "http://100.82.51.31:11434/api/generate",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"llama3.2:3b\",\n  \"prompt\": \"Classify the following task into exactly one: coding, reasoning, vision, embedding, general, math, translation. Reply with only that word. Task: \" + JSON.stringify($json.body?.task ?? $json.body ?? ''),\n  \"stream\": false\n}",
-        "options": {
-          "timeout": 30000,
-          "retryOnFail": true,
-          "maxTries": 3,
-          "waitBetweenTries": 5000
-        }
+        "jsonBody": "={\n  \"model\": \"llama3.2:3b\",\n  \"prompt\": \"Classify the following task into exactly one: coding, reasoning, vision, embedding, general, math, translation. Reply with only that word. Task: \" + JSON.stringify($json.body?.task ?? $json.body ?? ''),\n  \"stream\": false\n}"
       }
     },
     {
@@ -42,95 +35,9 @@
       "typeVersion": 3.2,
       "position": [680, 300],
       "parameters": {
-        "rules": {
-          "rules": [
-            {
-              "outputKey": "coding",
-              "conditions": {
-                "conditions": [
-                  {
-                    "value1": "={{ $json.response?.toLowerCase().trim() }}",
-                    "value2": "coding",
-                    "operator": { "type": "string", "operation": "contains" }
-                  }
-                ]
-              }
-            },
-            {
-              "outputKey": "reasoning",
-              "conditions": {
-                "conditions": [
-                  {
-                    "value1": "={{ $json.response?.toLowerCase().trim() }}",
-                    "value2": "reasoning",
-                    "operator": { "type": "string", "operation": "contains" }
-                  }
-                ]
-              }
-            },
-            {
-              "outputKey": "vision",
-              "conditions": {
-                "conditions": [
-                  {
-                    "value1": "={{ $json.response?.toLowerCase().trim() }}",
-                    "value2": "vision",
-                    "operator": { "type": "string", "operation": "contains" }
-                  }
-                ]
-              }
-            },
-            {
-              "outputKey": "embedding",
-              "conditions": {
-                "conditions": [
-                  {
-                    "value1": "={{ $json.response?.toLowerCase().trim() }}",
-                    "value2": "embedding",
-                    "operator": { "type": "string", "operation": "contains" }
-                  }
-                ]
-              }
-            },
-            {
-              "outputKey": "general",
-              "conditions": {
-                "conditions": [
-                  {
-                    "value1": "={{ $json.response?.toLowerCase().trim() }}",
-                    "value2": "general",
-                    "operator": { "type": "string", "operation": "contains" }
-                  }
-                ]
-              }
-            },
-            {
-              "outputKey": "math",
-              "conditions": {
-                "conditions": [
-                  {
-                    "value1": "={{ $json.response?.toLowerCase().trim() }}",
-                    "value2": "math",
-                    "operator": { "type": "string", "operation": "contains" }
-                  }
-                ]
-              }
-            },
-            {
-              "outputKey": "translation",
-              "conditions": {
-                "conditions": [
-                  {
-                    "value1": "={{ $json.response?.toLowerCase().trim() }}",
-                    "value2": "translation",
-                    "operator": { "type": "string", "operation": "contains" }
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        "fallbackOutput": "extra"
+        "mode": "expression",
+        "output": "={{ (() => { const r = ($('Classify Task').first().json.response || '').toLowerCase().trim(); const m = { coding: 0, reasoning: 1, vision: 2, embedding: 3, general: 4, math: 5, translation: 6 }; return m[r] !== undefined ? m[r] : 7; })() }}",
+        "numberOutputs": 8
       }
     },
     {
@@ -144,13 +51,7 @@
         "url": "http://100.82.51.31:11434/api/generate",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"qwen2.5-coder:7b\",\n  \"prompt\": $json.body?.prompt ?? $json.body,\n  \"stream\": false\n}",
-        "options": {
-          "timeout": 120000,
-          "retryOnFail": true,
-          "maxTries": 3,
-          "waitBetweenTries": 5000
-        }
+        "jsonBody": "={\n  \"model\": \"qwen2.5-coder:7b\",\n  \"prompt\": $json.body?.prompt ?? $json.body,\n  \"stream\": false\n}"
       }
     },
     {
@@ -164,13 +65,7 @@
         "url": "http://100.82.51.31:11434/api/generate",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"deepseek-r1:8b\",\n  \"prompt\": $json.body?.prompt ?? $json.body,\n  \"stream\": false\n}",
-        "options": {
-          "timeout": 120000,
-          "retryOnFail": true,
-          "maxTries": 3,
-          "waitBetweenTries": 5000
-        }
+        "jsonBody": "={\n  \"model\": \"deepseek-r1:8b\",\n  \"prompt\": $json.body?.prompt ?? $json.body,\n  \"stream\": false\n}"
       }
     },
     {
@@ -184,13 +79,7 @@
         "url": "http://100.82.51.31:11434/api/generate",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"minicpm-v:8b\",\n  \"prompt\": $json.body?.prompt ?? $json.body,\n  \"stream\": false\n}",
-        "options": {
-          "timeout": 120000,
-          "retryOnFail": true,
-          "maxTries": 3,
-          "waitBetweenTries": 5000
-        }
+        "jsonBody": "={\n  \"model\": \"minicpm-v:8b\",\n  \"prompt\": $json.body?.prompt ?? $json.body,\n  \"stream\": false\n}"
       }
     },
     {
@@ -204,13 +93,7 @@
         "url": "http://100.82.51.31:11434/api/embed",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"nomic-embed-text\",\n  \"input\": $json.body?.prompt ?? $json.body ?? ''\n}",
-        "options": {
-          "timeout": 60000,
-          "retryOnFail": true,
-          "maxTries": 3,
-          "waitBetweenTries": 5000
-        }
+        "jsonBody": "={\n  \"model\": \"nomic-embed-text\",\n  \"input\": $json.body?.prompt ?? $json.body ?? ''\n}"
       }
     },
     {
@@ -224,13 +107,7 @@
         "url": "http://100.82.51.31:11434/api/generate",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"qwen2.5:7b\",\n  \"prompt\": $json.body?.prompt ?? $json.body,\n  \"stream\": false\n}",
-        "options": {
-          "timeout": 120000,
-          "retryOnFail": true,
-          "maxTries": 3,
-          "waitBetweenTries": 5000
-        }
+        "jsonBody": "={\n  \"model\": \"qwen2.5:7b\",\n  \"prompt\": $json.body?.prompt ?? $json.body,\n  \"stream\": false\n}"
       }
     },
     {
@@ -244,13 +121,7 @@
         "url": "http://100.82.51.31:11434/api/generate",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"qwen2-math:7b\",\n  \"prompt\": $json.body?.prompt ?? $json.body,\n  \"stream\": false\n}",
-        "options": {
-          "timeout": 120000,
-          "retryOnFail": true,
-          "maxTries": 3,
-          "waitBetweenTries": 5000
-        }
+        "jsonBody": "={\n  \"model\": \"qwen2-math:7b\",\n  \"prompt\": $json.body?.prompt ?? $json.body,\n  \"stream\": false\n}"
       }
     },
     {
@@ -264,13 +135,7 @@
         "url": "http://100.82.51.31:11434/api/generate",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"gemma2:2b\",\n  \"prompt\": $json.body?.prompt ?? $json.body,\n  \"stream\": false\n}",
-        "options": {
-          "timeout": 60000,
-          "retryOnFail": true,
-          "maxTries": 3,
-          "waitBetweenTries": 5000
-        }
+        "jsonBody": "={\n  \"model\": \"gemma2:2b\",\n  \"prompt\": $json.body?.prompt ?? $json.body,\n  \"stream\": false\n}"
       }
     },
     {

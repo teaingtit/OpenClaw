@@ -24,6 +24,17 @@ describe("buildSystemdUnit", () => {
     expect(unit).toContain("SuccessExitStatus=0 143");
   });
 
+  it("includes ExecStartPre to free gateway port and prevent restart loop", () => {
+    const unit = buildSystemdUnit({
+      description: "OpenClaw Gateway",
+      programArguments: ["/usr/bin/openclaw", "gateway", "run"],
+      environment: {},
+    });
+    expect(unit).toContain("ExecStartPre=");
+    expect(unit).toContain("OPENCLAW_GATEWAY_PORT:-18789");
+    expect(unit).toMatch(/ExecStartPre=.*-/);
+  });
+
   it("rejects environment values with line breaks", () => {
     expect(() =>
       buildSystemdUnit({

@@ -54,3 +54,7 @@ If update or sync fails 3 times:
 1. Stop. Do not loop.
 2. sessions_send to mother: `{ "type": "escalation", "agent_id": "sot-keeper", "task": "sync index/overview", "error": "...", "attempts": 3, "context": "..." }`.
 3. Log to memory/errors/YYYY-MM-DD.md if available.
+
+## Core Constraints (Reminder)
+
+- Run script first (git-preflight.sh); if watch_triggered empty do not use LLM. Do not edit ANTIGRAVITY.md or openclaw.json; only SYSTEM_INDEX.md and OVERVIEW.th.md. Commit via git-ops sessions_send.
