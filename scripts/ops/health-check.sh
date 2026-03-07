@@ -16,9 +16,7 @@ LOG_MINUTES=15
 # Log error counts: warning above ERROR_WARN, critical above ERROR_CRITICAL (avoids CRITICAL from routine log noise)
 ERROR_WARN="${OPENCLAW_HEALTH_ERROR_WARN:-10}"
 ERROR_CRITICAL="${OPENCLAW_HEALTH_ERROR_CRITICAL:-60}"
-WORKER_IP="${OPENCLAW_WORKER_IP:-192.168.1.27}"
-SSH_CONFIG="${OPENCLAW_FATHER_SSH_CONFIG:-$HOME/.openclaw/workspace-father/ssh_config}"
-WORKER_HOST="${OPENCLAW_WORKER_HOST:-ryzenpc}"
+
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
@@ -53,7 +51,8 @@ if command -v systemctl >/dev/null 2>&1; then
   raw_state=$(systemctl --user show openclaw-gateway.service -p ActiveState --value 2>/dev/null || true)
   case "${raw_state:-}" in
     active)   gateway_svc="active" ;;
-    inactive|failed) gateway_svc="inactive" ;;
+    inactive) gateway_svc="inactive" ;;
+    failed)   gateway_svc="failed" ;;
     activating|deactivating) gateway_svc="$raw_state" ;;
     *) [ -z "$raw_state" ] && gateway_svc="unknown" || gateway_svc="$raw_state" ;;
   esac
@@ -116,23 +115,21 @@ if command -v journalctl >/dev/null 2>&1; then
   [ "${j_warnings:-0}" -gt "$warnings" ] && warnings=$j_warnings
 fi
 
-# Worker node
-worker="offline"
-if ping -c 1 -W 2 "$WORKER_IP" >/dev/null 2>&1; then
-  worker="online"
-elif [ -f "$SSH_CONFIG" ] && ssh -F "$SSH_CONFIG" -o ConnectTimeout=3 -o BatchMode=yes "$WORKER_HOST" "echo ok" >/dev/null 2>&1; then
-  worker="online"
-fi
+
 
 # --- Status ---
 status="ok"
 exit_code=0
-if [ "$gateway_port" != "up" ] || [ "$gateway_svc" = "inactive" ]; then
+
+# Critical: Port is down OR Service is definitely not okay (inactive/failed/activating for too long)
+# Note: activating is counted as critical here because if it stays activating until a timer check, it's stuck.
+if [ "$gateway_port" != "up" ] || [ "$gateway_svc" != "active" ]; then
   status="critical"
   exit_code=2
 elif [ "$disk_pct" -ge "$DISK_WARN_PCT" ] || [ "$mem_pct" -ge "$MEM_WARN_PCT" ]; then
   [ "$exit_code" -lt 2 ] && { status="warning"; exit_code=1; }
 fi
+
 if [ "$errors" -gt "$ERROR_WARN" ]; then
   [ "$exit_code" -lt 2 ] && { status="warning"; exit_code=1; }
 fi
@@ -140,15 +137,17 @@ if [ "$errors" -gt "$ERROR_CRITICAL" ]; then
   status="critical"
   exit_code=2
 fi
-# Restart loop: very high restarts indicate port conflict or crash loop (agent cannot recover; OS timer must)
-if [ "${gateway_restarts:-0}" -gt 50 ]; then
+
+# Restart loop: high restarts indicate port conflict or crash loop
+# Lowered threshold from 50 to 20 to catch issues sooner.
+if [ "${gateway_restarts:-0}" -gt 20 ]; then
   status="critical"
   exit_code=2
 fi
 
 # --- Output ---
-json=$(printf '{"ts":"%s","gateway":"%s","gateway_svc":"%s","gateway_restarts":%s,"docker":"%s","disk_pct":%s,"disk_mount":"%s","mem_pct":%s,"errors":%s,"warnings":%s,"worker":"%s","status":"%s"}' \
-  "$ts" "$gateway_port" "$gateway_svc" "${gateway_restarts:-0}" "$docker_status" "$disk_pct" "$disk_mount" "$mem_pct" "$errors" "$warnings" "$worker" "$status")
+json=$(printf '{"ts":"%s","gateway":"%s","gateway_svc":"%s","gateway_restarts":%s,"docker":"%s","disk_pct":%s,"disk_mount":"%s","mem_pct":%s,"errors":%s,"warnings":%s,"status":"%s"}' \
+  "$ts" "$gateway_port" "$gateway_svc" "${gateway_restarts:-0}" "$docker_status" "$disk_pct" "$disk_mount" "$mem_pct" "$errors" "$warnings" "$status")
 
 if [ "$FORMAT" = "verbose" ]; then
   echo "Health Check — $ts"
@@ -160,7 +159,7 @@ if [ "$FORMAT" = "verbose" ]; then
   echo "  Memory:             ${mem_pct}%"
   echo "  Log errors (${LOG_MINUTES}m): $errors (warn>$ERROR_WARN critical>$ERROR_CRITICAL)"
   echo "  Log warnings:       $warnings"
-  echo "  Worker:             $worker"
+
   echo "  Status:             $status"
 else
   echo "$json"
@@ -169,7 +168,7 @@ fi
 # --- Notify on critical ---
 if [ "$exit_code" -eq 2 ] && [ "$NOTIFY_ON_CRITICAL" = true ] && [ -x "$NOTIFY_SCRIPT" ]; then
   msg="⚠️ <b>[Health Check] CRITICAL</b>
-Gateway: $gateway_port | Service: $gateway_svc | Disk: ${disk_pct}% | Mem: ${mem_pct}% | Errors: $errors | Worker: $worker"
+Gateway: $gateway_port | Service: $gateway_svc | Disk: ${disk_pct}% | Mem: ${mem_pct}% | Errors: $errors"
   "$NOTIFY_SCRIPT" "$msg" 2>/dev/null || true
 fi
 

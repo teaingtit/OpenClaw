@@ -1,8 +1,10 @@
 [Unit]
-Description=OpenClaw health check: fix first, notify only if still broken
+Description=OpenClaw health check: fix first, escalate only if still broken
 
 [Service]
 Type=oneshot
 Environment=HOME=%h
+# Edit WorkingDirectory and ExecStart path if your repo is elsewhere.
+WorkingDirectory=/home/teaingtit/projects/openclaw
 ExecStart=/home/teaingtit/projects/openclaw/scripts/ops/health-check-fix-or-escalate.sh
 SuccessExitStatus=0 1 2

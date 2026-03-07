@@ -4,9 +4,7 @@
 
 set -euo pipefail
 
-WORKER_IP="${OPENCLAW_WORKER_IP:-192.168.1.27}"
-SSH_CONFIG="${OPENCLAW_FATHER_SSH_CONFIG:-$HOME/.openclaw/workspace-father/ssh_config}"
-WORKER_HOST="${OPENCLAW_WORKER_HOST:-ryzenpc}"
+
 
 # Disk: list mount and pct
 disk_json=$(df -h 2>/dev/null | tail -n +2 | awk 'NR<=5 {gsub(/%/,"",$5); printf "{\"mount\":\"%s\",\"pct\":%s},",$6,$5}' | sed 's/,$//')
@@ -54,15 +52,9 @@ if command -v apt-get >/dev/null 2>&1; then
   [ -z "$security_updates" ] && security_updates=0
 fi
 
-# Worker
-worker="offline"
-if ping -c 1 -W 2 "$WORKER_IP" >/dev/null 2>&1; then
-  worker="online"
-elif [ -f "$SSH_CONFIG" ] && ssh -F "$SSH_CONFIG" -o ConnectTimeout=3 -o BatchMode=yes "$WORKER_HOST" "echo ok" >/dev/null 2>&1; then
-  worker="online"
-fi
 
-export SYSREPORT_DISK="$disk_json" SYSREPORT_MEM=$mem_pct SYSREPORT_LOAD="$load" SYSREPORT_DOCKER="$docker_status" SYSREPORT_DOCKER_OK="$docker_healthy" SYSREPORT_FAILED=$failed_units SYSREPORT_SEC=$security_updates SYSREPORT_WORKER="$worker"
+
+export SYSREPORT_DISK="$disk_json" SYSREPORT_MEM=$mem_pct SYSREPORT_LOAD="$load" SYSREPORT_DOCKER="$docker_status" SYSREPORT_DOCKER_OK="$docker_healthy" SYSREPORT_FAILED=$failed_units SYSREPORT_SEC=$security_updates
 python3 << 'PYEOF'
 import json
 import os
@@ -80,6 +72,6 @@ print(json.dumps({
     "docker_healthy": docker_ok,
     "failed_units": int(os.environ.get("SYSREPORT_FAILED", 0)),
     "security_updates": int(os.environ.get("SYSREPORT_SEC", 0)),
-    "worker": os.environ.get("SYSREPORT_WORKER", "offline"),
+
 }))
 PYEOF
