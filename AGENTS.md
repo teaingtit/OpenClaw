@@ -78,17 +78,25 @@
 - **node_production_support:** "Node remains supported for running built output (`dist/*`) and production installs."
 - **mac_packaging_dev:** "`scripts/package-mac-app.sh` defaults to current arch. Release checklist: `docs/platforms/mac/release.md`."
 - **type_check_build:** "`pnpm build`"
+- **build_tool:** "tsdown (outputs to `dist/`)."
 - **ts_checks:** "`pnpm tsgo`"
 - **lint_format_all:** "`pnpm check`"
 - **format_check_only:** "`pnpm format` (oxfmt --check)"
 - **format_fix:** "`pnpm format:fix` (oxfmt --write)"
-- **test_suite:** "`pnpm test` (vitest); coverage: `pnpm test:coverage`"
+- **test_suite:** "`pnpm test` (vitest via `scripts/test-parallel.mjs`); coverage: `pnpm test:coverage`"
+- **test_unit_fast:** "`pnpm test:fast` — runs unit tests only without the parallel orchestration overhead."
+- **test_single_file:** "`vitest run <path/to/file.test.ts>` — run one test file directly."
+- **test_watch:** "`pnpm test:watch` — interactive vitest watcher during development."
 
 ## Coding Style & Naming Conventions
 
 > กฎการเขียนโค้ดและตั้งชื่อ
 
 - **language:** "TypeScript (ESM). Prefer strict typing; AVOID `any`."
+- **cli_framework:** "Commander for CLI wiring + @clack/prompts for interactive TTY prompts."
+- **esm_import_extension:** "Use `.js` extension for cross-package/cross-module imports (ESM requirement). Type-only: `import type { X } from './x.js'`."
+- **anti_redundancy:** "NEVER create re-export wrapper files. Import directly from the original source. Before writing any formatter/utility/helper, search for an existing one first."
+- **source_of_truth_utilities:** "Time formatting: `src/infra/format-time`. Tables: `src/terminal/table.ts` (`renderTable`). Colors/theme: `src/terminal/theme.ts` (`theme.success`, `theme.muted`, etc.). Progress/spinners: `src/cli/progress.ts`."
 - **linting_formatting:** "Formatting/linting via Oxlint and Oxfmt; run `pnpm check` before commits."
 - **no_ts_bypass:** "NEVER add `@ts-nocheck` and do NOT disable `no-explicit-any`; fix root causes and update Oxlint/Oxfmt config only when required."
 - **dynamic_import_guardrail:** "Do not mix `await import(\"x\")` and static `import ... from \"x\"` for the same module in production code paths. If you need lazy loading, create a dedicated `*.runtime.ts` boundary (that re-exports from `x`) and dynamically import that boundary from lazy callers only."
