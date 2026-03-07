@@ -9,6 +9,9 @@ if [[ -x "$ROOT_DIR/scripts/ops/pre-commit-sot-check.sh" ]]; then
   "$ROOT_DIR/scripts/ops/pre-commit-sot-check.sh"
 fi
 
+# Machine-generated commits (e.g. sot-sync service) skip lint/format — node not in systemd PATH
+[ "${OPENCLAW_MACHINE_COMMIT:-0}" = "1" ] && exit 0
+
 RUN_NODE_TOOL="$ROOT_DIR/scripts/pre-commit/run-node-tool.sh"
 FILTER_FILES="$ROOT_DIR/scripts/pre-commit/filter-staged-files.mjs"
 

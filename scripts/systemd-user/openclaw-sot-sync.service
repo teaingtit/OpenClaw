@@ -5,5 +5,5 @@ Description=Regenerate SYSTEM_INDEX.md agent table from openclaw.json
 Type=oneshot
 Environment=HOME=%h
 WorkingDirectory=/home/teaingtit/projects/openclaw
-ExecStart=/home/teaingtit/projects/openclaw/scripts/ops/gen-agent-index.sh
+ExecStart=/home/teaingtit/projects/openclaw/scripts/ops/gen-agent-index.sh --commit
 SuccessExitStatus=0 1
