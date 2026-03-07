@@ -1,7 +1,11 @@
 # HEARTBEAT.md — SOT Keeper
 
 - **Schedule:** Every 6h (`heartbeat.every: "6h"` in openclaw.json).
-- **Script-first (token reduction):**
-  1. Exec `git-preflight.sh --watch-list openclaw.json,ANTIGRAVITY.md,DetailHardware.md` (or repo equivalent).
-  2. If `watch_triggered` is empty and index/overview are in sync → no LLM; optional one-line "sync OK" to mother.
-  3. If changes detected or index/overview outdated → use LLM to update SYSTEM_INDEX.md and OVERVIEW.th.md; request commit via git-ops; report to mother.
+- **Script-first (ลด token):**
+  1. Exec `gen-agent-index.sh` → exit 0 = clean (skip LLM), exit 1 = updated (continue)
+  2. Exec `git-preflight.sh --watch-list openclaw.json,ANTIGRAVITY.md,DetailHardware.md`
+  3. ถ้า watch_triggered ว่าง AND gen-agent-index exit 0 → ไม่ต้องใช้ LLM
+  4. ถ้ามี changes → LLM อัปเดต OVERVIEW.th.md และ sections อื่นใน SYSTEM_INDEX.md
+     → request commit ผ่าน git-ops → report to mother
+- **Note:** systemd path watcher จัดการ immediate sync เมื่อ openclaw.json เปลี่ยน
+  heartbeat นี้คือ 6h backstop สำหรับ changes ที่ watcher พลาด

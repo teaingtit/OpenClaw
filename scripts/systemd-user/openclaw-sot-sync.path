@@ -1,0 +1,10 @@
+[Unit]
+Description=Watch openclaw.json and DetailHardware.md for SOT drift
+
+[Path]
+PathChanged=/home/teaingtit/.openclaw/openclaw.json
+PathChanged=/home/teaingtit/projects/openclaw/DetailHardware.md
+Unit=openclaw-sot-sync.service
+
+[Install]
+WantedBy=default.target
