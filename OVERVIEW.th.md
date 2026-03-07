@@ -50,11 +50,10 @@ OpenClaw เป็นระบบ **Multi-Agent Gateway** — มี Gateway ร
 
 ## ฮาร์ดแวร์ (สรุป)
 
-| โหนด             | บทบาท                    | ไอพี Tailscale         |
-| ---------------- | ------------------------ | ---------------------- |
-| minipc (Master)  | Gateway / Control Center | 100.96.9.50            |
-| ryzenpc (Worker) | AI Engine / GPU          | 100.82.51.31 (WoL ได้) |
-| Client (ASUS)    | เครื่องผู้ใช้            | 100.71.184.70          |
+| โหนด            | บทบาท                    | ไอพี Tailscale |
+| --------------- | ------------------------ | -------------- |
+| minipc (Master) | Gateway / Control Center | 100.96.9.50    |
+| Client (ASUS)   | เครื่องผู้ใช้            | 100.71.184.70  |
 
 รายละเอียดเต็มใน [DetailHardware.md](DetailHardware.md)
 

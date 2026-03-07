@@ -3,6 +3,37 @@
 
 ---
 
+## How to use this file
+
+- **Read first (in order):** `SYSTEM_INDEX.md` → `ANTIGRAVITY.md` → this file. Do not assume project structure or config from memory.
+- **Related:** `.cursor/rules/project-context.mdc`, `.cursor/rules/agents-config.mdc`, `docs/AGENT_STANDARD.md`, `docs/AGENT_DESIGN_GUIDE.md`, `SCRIPTS_REGISTRY.md`.
+- **Critical:** Never write or overwrite `openclaw.json` directly. Use `openclaw config set ...` / `openclaw agents set-identity ...` / `openclaw doctor --fix` only (see RULE_20).
+
+### Rule index (task → rule)
+
+| If you need to...                              | Rule  |
+| ---------------------------------------------- | ----- |
+| Answer facts about paths, config, agents, APIs  | **0** (cite sources; no infer) |
+| Create or validate a new agent                 | **1**, **6** (+ docs/AGENT_STANDARD.md) |
+| Optimize code or docs                          | **2**, **3** |
+| Update or rely on system state                 | **4**, **7** |
+| Log errors / avoid repeating failures          | **5** |
+| Plan work in steps                             | **8** |
+| Self-check before submitting                   | **9** |
+| Set model/routing/channel                      | **10** |
+| Document tool scope (TOOLS.md ↔ openclaw.json) | **11** |
+| Browser in Docker                              | **12** |
+| Invoke non-persistent agents (dev, father)      | **13** |
+| Gateway in Docker (proxy, trust)               | **14** |
+| Audit exec usage                               | **15** |
+| Subagent/spawn permissions                     | **16** |
+| Write SOUL/TOOLS for AI (bookend, sections)     | **17** |
+| Retries, timeout, escalation                   | **18** |
+| Container/sandbox awareness                    | **19** |
+| Change config safely                           | **20** |
+
+---
+
 ## 0. RULE_ANTI_HALLUCINATION (ห้ามหลอน — อ่านก่อนตอบเสมอ)
 
 > **หลักเหล็ก:** ข้อมูลที่ไม่มีใน repo / config / memory = ห้ามสร้างขึ้นมาเอง ถ้าไม่แน่ใจหรือหาไม่เจอ = บอกตรงๆ ว่า "ไม่พบข้อมูลใน [files ที่เช็คแล้ว]"
@@ -13,6 +44,7 @@
 - **no_infer_paths:** Path, port, ชื่อ agent, config key ต้องอ่านจาก ANTIGRAVITY.md / SYSTEM_INDEX.md / openclaw.json / ไฟล์ใน repo เท่านั้น. ห้ามเดาจาก convention ทั่วไปหรือความเคยชินของระบบอื่น.
 - **no_infer_apis:** รูปแบบ API, tool call, CLI flag ต้องอ้างอิงจาก docs ใน repo หรือ source code ที่อ่านได้. ห้ามสมมติจากความจำว่า "น่าจะเป็นแบบนี้".
 - **before_answer_check:** ก่อนส่งคำตอบที่เกี่ยวกับสถาปัตยกรรม/config/agent: (1) อ่านไฟล์ที่เกี่ยวข้องแล้วหรือยัง (2) อ้างอิงบรรทัดหรือ section ได้หรือไม่ (3) ถ้าไม่แน่ใจ → ระบุว่า "ต้องตรวจจากไฟล์ X อีกครั้ง" หรือ "ไม่พบใน [files]".
+- **see_also:** RULE_4 (state sync), RULE_7 (context init), RULE_9 (self-review), RULE_17 (document completeness) for consistent cite / no-guess behavior.
 
 ---
 
@@ -44,7 +76,7 @@
 ## 4. RULE_STATE_SYNCHRONIZATION
 > ไฟล์ ANTIGRAVITY.md คือ Source of Truth ห้ามเดาข้อมูลเอง ต้องอัปเดตและอ้างอิงไฟล์นี้เสมอ
 - **compulsory_updates:** Update `ANTIGRAVITY.md` immediately upon architecture/config changes.
-- **hallucination_prevention:** Always read `ANTIGRAVITY.md` before broad system analysis. Never substitute pre-trained/model knowledge for actual repo or config state.
+- **hallucination_prevention:** Always read `ANTIGRAVITY.md` before broad system analysis. Never substitute pre-trained/model knowledge for actual repo or config state. (See RULE_0 for cite_before_claim / i_dont_know_gate.)
 - **consistency_check:** Ensure doc matches `openclaw.json` and host state.
 - **no_guess_fill:** If a value is missing from ANTIGRAVITY.md or openclaw.json, do NOT invent it; state "ไม่พบใน [files checked]" or ask the user to confirm.
 
@@ -55,7 +87,8 @@
 - **cross_agent_learning:** If systemic, update `ANTIGRAVITY.md` or `AGENT_DESIGN_GUIDE.md`.
 
 ## 6. RULE_AGENT_VALIDATION_CHECKLIST
-> ก่อนเริ่มใช้งาน Agent ใหม่ ต้องตรวจสอบ Checklist เหล่านี้ให้ผ่านทั้งหมด. See also `docs/AGENT_STANDARD.md` for a single agent standard (script-first, TOOLS sync, invocation format).
+> ก่อนเริ่มใช้งาน Agent ใหม่ ต้องตรวจสอบ Checklist เหล่านี้ให้ผ่านทั้งหมด.
+- **see_also:** `docs/AGENT_STANDARD.md` (script-first, TOOLS sync, invocation format), `docs/AGENT_DESIGN_GUIDE.md` (reference table).
 - **workspace_files:**
   - `SOUL.md` (Identity, Rules)
   - `IDENTITY.md` (Metadata, Theme)
@@ -80,10 +113,11 @@
 
 ## 7. RULE_CONTEXT_INITIALIZATION
 > ห้ามเดาโครงสร้างระบบ ต้องอ่านไฟล์อ้างอิงค้นหาความจริงก่อนลงมือทำเสมอ
-- **mandatory_reading:** Read `ANTIGRAVITY.md` first. Do not assume project structure, agent list, or config keys from memory alone.
+- **mandatory_reading:** Read `SYSTEM_INDEX.md` then `ANTIGRAVITY.md` first. Do not assume project structure, agent list, or config keys from memory alone. (See RULE_0.)
 - **history_check:** Check `memory/errors/` for debugging.
 - **exploration:** Use `list_dir` or `grep_search` before assuming paths. If a path is not found in repo, say so — do not invent.
 - **no_assume:** Never assume "this project probably has X" or "typically it would be at Y". Verify in repo or state "ไม่พบใน [sources checked]".
+- **hardware:** For device-specific or deployment advice, read `DetailHardware.md` (or ANTIGRAVITY.md §3).
 
 ## 8. RULE_MODULAR_INSTRUCTIONS
 > แบ่งงานใหญ่เป็นขั้นตอนย่อยๆ ห้ามทำรวดเดียวโดยไม่ตรวจสอบประสิทธิผล
@@ -203,10 +237,11 @@
 - **require_section_headers:** ทุก SOUL.md ต้องมี `##` headers แบ่ง section ชัดเจน — wall of text ห้ามเด็ดขาด
 - **numbered_for_mandatory:** ขั้นตอนที่ต้องทำครบใช้ตัวเลข `1. 2. 3.` ไม่ใช่ bullet `-`
 - **explain_why:** กฎสำคัญต้องมีเหตุผลกำกับ `[Rule] — [consequence if violated]` เพื่อให้ AI generalize edge cases ได้
-- **data_conflict_priority:** `openclaw.json` (live state) > `ANTIGRAVITY.md` (design intent) > `memory/` (history) > model pre-trained knowledge (ห้ามใช้แทนข้อมูลจริง)
+- **data_conflict_priority:** `openclaw.json` (live state) > `ANTIGRAVITY.md` (design intent) > `memory/` (history) > model pre-trained knowledge (ห้ามใช้แทนข้อมูลจริง). Align with RULE_0.
 - **quote_then_act:** Task prompts สำหรับงาน document-heavy ต้องบังคับอ้างอิงก่อน: `"Find quotes from [file]. Act ONLY based on those quotes."`
-- **i_dont_know_gate:** ถ้าข้อมูลไม่มีใน source files → ตอบ `"ไม่พบข้อมูลใน [files checked]"` ห้าม generate เอง
+- **i_dont_know_gate:** ถ้าข้อมูลไม่มีใน source files → ตอบ `"ไม่พบข้อมูลใน [files checked]"` ห้าม generate เอง (see RULE_0).
 - **agent_persistence:** SOUL.md ของ Specialist Agent ต้องมี 3 คำสั่งนี้: (1) keep going until resolved, (2) use tools to verify — do not guess, (3) plan before each action
+- **see_also:** `docs/AGENT_STANDARD.md` for SOUL/TOOLS requirements.
 
 ## 18. RULE_WORKFLOW_GUARDRAILS
 > กำหนดขอบเขตการทำงาน (Guardrails) เพื่อป้องกัน Token Bloat และ Infinite Loops
@@ -222,13 +257,12 @@
 
 ## 20. CONFIG_PROTECTION_PROTOCOL
 > ห้าม AI ใดๆ ก็ตาม (รวมถึง Agent เอง) เข้าไปยุ่มย่ามหรือเขียนทับไฟล์ `openclaw.json` โดยพลการเด็ดขาด
-- **safe_update:** ท่องไว้เสนอว่า **ห้ามใช้คำสั่ง `cat <<EOF > .../openclaw.json`** และห้ามใช้ Write File Operation ใดๆ เพื่อแก้ไข Config นี้ หากต้องจัดการ Config ให้ใช้ CLI Command อย่าง `openclaw agents set-identity ...` หรือ `openclaw config set ...` หรือแก้ไขผ่าน Node Modules แทนเสมอ
+- **safe_update:** ท่องไว้เสมอว่า **ห้ามใช้คำสั่ง `cat <<EOF > .../openclaw.json`** และห้ามใช้ Write File Operation ใดๆ เพื่อแก้ไข Config นี้ หากต้องจัดการ Config ให้ใช้ CLI Command อย่าง `openclaw agents set-identity ...` หรือ `openclaw config set ...` หรือแก้ไขผ่าน Node Modules แทนเสมอ
 - **escalation:** หากตรวจพบไฟล์ Config เสีย (JSON Invalid) ให้เรียกใช้ `openclaw doctor --fix` ทันที หากกู้คืนไม่ได้ให้แจ้งมนุษย์ (Sunday/Human) ห้ามพยายามสร้างไฟล์ Skeleton ขึ้นมาเขียนทับเองเพราะจะทำให้ Agent หายทั้งระบบ
 
 ---
 
-## BOOKEND — Anti-hallucination reminder
+## BOOKEND — Reminder (RULE_0 + RULE_20)
 
-- **ห้ามหลอน:** ข้อมูลที่ไม่มีใน repo/config/memory = ห้ามสร้างขึ้นมา. ไม่แน่ใจ = บอก "ไม่พบใน [files checked]" หรือให้ user ยืนยัน.
-- **อ้างอิงก่อนตอบ:** path, config key, agent id, model string ต้องอ้างอิงจาก ANTIGRAVITY.md / openclaw.json / ไฟล์ใน repo. ห้ามใช้แค่ความรู้จาก model.
-- **ห้ามเขียน openclaw.json โดยตรง.** ใช้เฉพาะ `openclaw config set ...` / `openclaw agents set-identity ...` / `openclaw doctor --fix`.
+- **RULE_0 — ห้ามหลอน:** ข้อมูลที่ไม่มีใน repo/config/memory = ห้ามสร้างขึ้นมา. ไม่แน่ใจ = บอก "ไม่พบใน [files checked]" หรือให้ user ยืนยัน. path, config key, agent id, model string ต้องอ้างอิงจาก ANTIGRAVITY.md / openclaw.json / ไฟล์ใน repo.
+- **RULE_20 — ห้ามเขียน openclaw.json โดยตรง.** ใช้เฉพาะ `openclaw config set ...` / `openclaw agents set-identity ...` / `openclaw doctor --fix`.
