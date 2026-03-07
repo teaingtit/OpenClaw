@@ -1,6 +1,6 @@
 #!/bin/bash
 # set-backlog-bot-commands.sh — ลงทะเบียนคำสั่ง (menu) ให้ Backlog Telegram Bot
-# รันครั้งเดียว (หรือเมื่อเพิ่มคำสั่งใหม่) เพื่อให้ปุ่มเมนูแสดง /wake_ryzenpc, /sleep_ryzenpc
+# รันครั้งเดียว (หรือเมื่อเพิ่มคำสั่งใหม่) เพื่อให้ปุ่มเมนูแสดงคำสั่งที่ต้องการ
 
 OPENCLAW_ENV="${OPENCLAW_ENV:-/home/teaingtit/.openclaw/.env}"
 if [ -r "$OPENCLAW_ENV" ]; then
@@ -17,8 +17,7 @@ curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/setMyCommands" \
   -H "Content-Type: application/json" \
   -d '{
     "commands": [
-      {"command": "wake_ryzenpc", "description": "ปลุก Worker Node (ryzenpc)"},
-      {"command": "sleep_ryzenpc", "description": "ปิด Worker Node (ryzenpc)"},
+
       {"command": "help", "description": "แสดงคำสั่ง"}
     ]
   }' | jq .

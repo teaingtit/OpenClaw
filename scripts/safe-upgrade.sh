@@ -11,7 +11,9 @@ set -euo pipefail
 SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 CONFIG_SRC="/home/teaingtit/.openclaw/openclaw.json"
 BACKUP_DIR="/home/teaingtit/.openclaw/backup"
-LOG_FILE="/tmp/safe-upgrade.log"
+LOG_DIR="/home/teaingtit/.openclaw/logs"
+mkdir -p "$LOG_DIR"
+LOG_FILE="$LOG_DIR/upgrade.log"
 VERSION_TARGET="${1:-latest}"
 
 log() { echo "[$(date -Iseconds)] $*" | tee -a "$LOG_FILE"; }
@@ -75,6 +77,7 @@ fi
 # --- ขั้นตอนที่ 5: Validate config หลัง upgrade ---
 log "Validating critical config keys..."
 ERRORS=0
+set +e
 python3 - <<'PYEOF'
 import json, sys
 d = json.load(open("/home/teaingtit/.openclaw/openclaw.json"))
@@ -95,6 +98,7 @@ for k, v in checks:
 sys.exit(errors)
 PYEOF
 ERRORS=$?
+set -e
 
 # --- ขั้นตอนที่ 6: Restart gateway ---
 log "Restarting openclaw-gateway.service..."

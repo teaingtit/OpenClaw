@@ -1,6 +1,6 @@
 #!/bin/bash
 # backlog-bot-commands.sh — รับคำสั่งจาก Backlog Telegram Bot (polling)
-# รองรับ: /wake_ryzenpc, /sleep_ryzenpc, /help
+# รองรับ: /help
 # วิธีใช้: cron ทุก 2 นาที
 #   */2 * * * * /home/teaingtit/projects/openclaw/scripts/backlog-bot-commands.sh
 #
@@ -106,38 +106,11 @@ process_command() {
   cmd=$(echo "$cmd" | tr '[:upper:]' '[:lower:]')
 
   case "$cmd" in
-    /wake_ryzenpc)
-      send_reply "🛜 กำลังปลุก Worker Node (ryzenpc)..."
-      OUT=$("$SCRIPT_DIR/wake-ai.sh" 2>&1)
-      RC=$?
-      if [ $RC -eq 0 ]; then
-        # wake-ai.sh ส่ง tg-notify เองแล้ว — ตอบสั้นๆ ยืนยัน
-        send_reply "✅ <b>wake-ai.sh</b> รันสำเร็จ"
-      else
-        ERRMSG=$(echo "$OUT" | tail -3)
-        send_reply "❌ <b>wake-ai.sh ล้มเหลว</b> (exit $RC)
-<code>${ERRMSG}</code>"
-      fi
-      ;;
 
-    /sleep_ryzenpc)
-      send_reply "💤 กำลังปิด Worker Node (ryzenpc)..."
-      OUT=$("$SCRIPT_DIR/sleep-ai.sh" 2>&1)
-      RC=$?
-      if [ $RC -eq 0 ]; then
-        send_reply "✅ สั่งปิด ryzenpc สำเร็จ — เครื่องจะดับในไม่กี่วินาที"
-      else
-        ERRMSG=$(echo "$OUT" | tail -3)
-        send_reply "❌ <b>sleep-ai.sh ล้มเหลว</b> (exit $RC)
-<code>${ERRMSG}</code>"
-      fi
-      ;;
 
     /help|/start)
       send_reply "📋 <b>Backlog Bot — คำสั่ง Manual</b>
 
-/wake_ryzenpc — ปลุก Worker Node (ryzenpc)
-/sleep_ryzenpc — ปิด Worker Node (ryzenpc)
 /help — แสดงคำสั่งนี้"
       ;;
 
