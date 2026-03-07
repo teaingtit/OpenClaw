@@ -1,6 +1,17 @@
 # 🖥️ ฮาร์ดแวร์และสถาปัตยกรรมระบบ (Hardware Details)
 
-ระบบประกอบด้วย 3 โหนดหลัก ดังนี้:
+> **Purpose:** Single source of truth for this deployment's hardware, nodes, network, and SSH. For summary table and agent context, see **ANTIGRAVITY.md §3**. Scripts (pull models, Ollama keep-alive, etc.): **SCRIPTS_REGISTRY.md**.  
+> **When to update:** When you add/change machines, IPs, SSH config, roles, or network — keep this file and ANTIGRAVITY.md §3 in sync.
+
+## Quick reference (node_id ↔ alias ↔ Tailscale)
+
+| node_id (ANTIGRAVITY §3) | SSH / alias  | Tailscale IP  | Role summary     |
+| ------------------------ | ------------ | ------------- | ---------------- |
+| `master_gateway`         | `ssh minipc` | `100.96.9.50` | Gateway, control |
+
+| `client` | — | `100.71.184.70`| User/client machine |
+
+---
 
 ## 1. Master Node / Gateway Server (Mini PC)
 
@@ -13,25 +24,7 @@
 - **หน้าที่หลัก**: เป็น System Control Center ควบคุมและกระจายงานในเครือข่าย
 - **Tailscale IP**: `100.96.9.50`
 - **SSH**: `ssh minipc` (ใช้ Key: `teaingtit`)
-
-## 2. Worker Node / AI Inference Engine (Ryzen PC)
-
-- **CPU**: AMD Ryzen 5 5600 (6 Cores, 12 Threads)
-- **GPU**: NVIDIA RTX 4060 8GB
-- **Motherboard**: MSI A520M-A PRO DDR4 (MS-7C96)
-- **RAM**: 32GB DDR4
-- **Storage**: 512GB NVMe SSD (HS-SSD-FUTURE Eco)
-- **PSU**: 550W
-- **OS**: Ubuntu 26.04 LTS (Single OS)
-- **Local IP**: `192.168.1.27` (Static)
-- **Tailscale IP**: `100.82.51.31`
-- **SSH**: `ssh ryzenpc` (ใช้ Key: `teaingtit`, Passwordless sudo)
-- **หน้าที่หลัก**: ประมวลผล AI และงานที่ต้องใช้ GPU
-- **AI Stack**: NVIDIA Driver 590 / Ollama (models: `~/ai-models`, bind `0.0.0.0:11434`) / Tailscale
-- **Ollama models (14)**: deepseek-r1:8b, qwen2.5:7b, mistral:7b, llama3.2:3b, gemma2:2b, qwen2.5-coder:7b, starcoder2:3b, qwen2.5-coder:1.5b, minicpm-v:8b, moondream:latest, llava:7b, nomic-embed-text, bge-m3, qwen2-math:7b. Pull: `scripts/pull-worker-models.sh`. Keep-alive: `scripts/configure-ollama-keepalive.sh 5m`
-- **Audio (optional, systemd)**: whisper-api (port 8787), tts-api (port 8788) — services are installed but **disabled by default** to save VRAM. Enable manually when needed.
-- **Wake-on-LAN**: `enp34s0` Magic Packet — ปลุกเครื่องผ่าน Master Node ได้
-- **Auto-login**: TTY1 เข้า terminal อัตโนมัติ
+- **OpenClaw**: Gateway (port `18789`); systemd user service or Docker — run exactly one. See ANTIGRAVITY.md §7.0.
 
 ## 3. Client Node (ASUS ExpertBook)
 
@@ -42,3 +35,4 @@
 - **GPU**: Intel UHD Graphics (2GB VRAM)
 - **OS**: Windows
 - **Tailscale IP**: `100.71.184.70`
+- **หน้าที่หลัก**: เครื่องใช้งานประจำ (user/client) — เข้าถึง Control UI, Telegram, และสั่งงานผ่าน Sunday
