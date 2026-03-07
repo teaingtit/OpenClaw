@@ -22,14 +22,17 @@
 | debug incident / escalate ปัญหา                       | §10 INCIDENT_ESCALATION_PROTOCOL        |
 | ดู file paths สำคัญ                                   | §6 CRITICAL_FILE_MAP                    |
 | สคริป routine / script-first ลดโทเคน                  | §6b SCRIPT_TOOLKIT, SCRIPTS_REGISTRY.md |
-| ลดโทเคนเรื่อง server (OS-only, ปิด Monitor heartbeat) | §10.1d SERVER_OS_ONLY_MODE              |
 | มาตรฐาน agent (script-first, รูปแบบเดียวกัน, ลดโทเคน) | §6 + docs/AGENT_STANDARD.md             |
+| config safety (ห้ามเขียน openclaw.json โดยตรง)        | .antigravityrules RULE_20, §2           |
+| hardware / devices รายละเอียด                         | DetailHardware.md, §3                   |
+
+**Related:** Operational rules → `.antigravityrules`. Full bookend reminder → §11.
 
 **⚠️ 3 กฎที่ต้องจำก่อนทำอะไรก็ตาม:**
 
-1. **Model strings** ต้องขึ้นต้นด้วย `openrouter/` เสมอ — `anthropic/claude-...` หรือ `openai/gpt-...` ล้มเหลวทันที (ไม่มี direct API key)
-2. **Inter-agent config** ต้องมีใน `openclaw.json`: `tools.agentToAgent.enabled=true` + `tools.sessions.visibility=all` — ขาดอย่างใดอย่างหนึ่ง = delegation ทุกตัวล้มเหลวเงียบๆ
-3. **Non-persistent agents** (`dev`, `father`) ไม่ปรากฏใน `sessions_list` = ปกติ — ใช้ `sessions_spawn` + `agentId` เสมอ ห้าม fallback ไป generic sub-agent
+1.  **Model strings** ต้องขึ้นต้นด้วย `openrouter/` เสมอ — `anthropic/claude-...` หรือ `openai/gpt-...` ล้มเหลวทันที (ไม่มี direct API key)
+2.  **Inter-agent config** ต้องมีใน `openclaw.json`: `tools.agentToAgent.enabled=true` + `tools.sessions.visibility=all` — ขาดอย่างใดอย่างหนึ่ง = delegation ทุกตัวล้มเหลวเงียบๆ
+3.  **Non-persistent agents** (`dev`, `father`) ไม่ปรากฏใน `sessions_list` = ปกติ — ใช้ `sessions_spawn` + `agentId` เสมอ ห้าม fallback ไป generic sub-agent
 
 ---
 
@@ -48,7 +51,7 @@
 - **agents_workers:** Isolated directories (`~/.openclaw/workspace-*`)
 - **channels:** Interfaces bridging reality and AI (e.g., `plugin-telegram@v1.4.1`)
 - **sandbox_layer:** `tools.allow` per agent in `openclaw.json`; OS-level sandbox (`sandbox.mode`) is `off` for all agents — Docker container is the isolation boundary. `sandbox.mode: "all"` requires Docker-in-Docker (not configured).
-- **model_provider:** Primary: OpenRouter. Optional local: **Ollama on worker** (ryzenpc `100.82.51.31:11434`). Model strings for cloud: `openrouter/<provider>/<model>`. For local: `ollama/<model>` (e.g. `ollama/qwen2.5-coder:7b`). Bare `anthropic/...` or `openai/...` tries direct API and fails — no direct API keys configured.
+- **model_provider:** Primary: OpenRouter. Model strings for cloud: `openrouter/<provider>/<model>`. Bare `anthropic/...` or `openai/...` tries direct API and fails — no direct API keys configured.
 - **required_config_flags (CRITICAL):** The following root-level keys in `openclaw.json` are MANDATORY for inter-agent delegation to work. If either is missing, ALL agent-to-agent communication fails silently:
   ```json
   "tools": { "sessions": { "visibility": "all" }, "agentToAgent": { "enabled": true } }
@@ -57,15 +60,11 @@
 
 ## 3. HARDWARE_INFRASTRUCTURE
 
-| node_id            | role                         | hardware_specs                                                      | operating_system               | tailscale_network                     |
-| ------------------ | ---------------------------- | ------------------------------------------------------------------- | ------------------------------ | ------------------------------------- |
-| `master_gateway`   | Gateway / Master (minipc)    | Machenike Mini N TL24 (Intel N150, 16GB LPDDR5, 512GB SSD)          | Ubuntu Server 26.04 LTS (24/7) | `100.96.9.50`                         |
-| `worker_ai_engine` | AI Engine / Worker (ryzenpc) | AMD Ryzen 5 5600, RTX 4060 8GB, 32GB DDR4, 512GB NVMe               | Ubuntu 26.04 LTS (Single OS)   | `100.82.51.31` (Wake via WoL enp34s0) |
-| `client`           | Client                       | ASUS ExpertBook P3605CVA (i5-13420H, 16GB RAM, 1TB NVMe, Intel UHD) | Windows                        | `100.71.184.70`                       |
+| node_id          | role                      | hardware_specs                                             | operating_system               | tailscale_network |
+| ---------------- | ------------------------- | ---------------------------------------------------------- | ------------------------------ | ----------------- |
+| `master_gateway` | Gateway / Master (minipc) | Machenike Mini N TL24 (Intel N150, 16GB LPDDR5, 512GB SSD) | Ubuntu Server 26.04 LTS (24/7) | `100.96.9.50`     |
 
-### 3a. Worker Node — Ollama models (ryzenpc)
-
-Ollama runs on ryzenpc at `http://100.82.51.31:11434` (bind `0.0.0.0`). Gateway discovers models via `models.providers.ollama.baseUrl`. Installed models (14): **Reasoning/General:** deepseek-r1:8b, qwen2.5:7b, mistral:7b, llama3.2:3b, gemma2:2b. **Coding:** qwen2.5-coder:7b, starcoder2:3b, qwen2.5-coder:1.5b. **Vision:** minicpm-v:8b, moondream:latest, llava:7b. **Embedding/RAG:** nomic-embed-text, bge-m3. **Specialized:** qwen2-math:7b. Pull script: `scripts/pull-worker-models.sh`. OLLAMA_KEEP_ALIVE: set via `scripts/configure-ollama-keepalive.sh 5m` when ryzenpc is reachable. See `docs/workflows/local-inference.md`.
+| `client` | Client | ASUS ExpertBook P3605CVA (i5-13420H, 16GB RAM, 1TB NVMe, Intel UHD) | Windows | `100.71.184.70` |
 
 ## 3b. TELEGRAM_BOT_REGISTRY
 
@@ -79,18 +78,14 @@ Ollama runs on ryzenpc at `http://100.82.51.31:11434` (bind `0.0.0.0`). Gateway 
 | `TG_BACKLOG_BOT_TOKEN`    | BACK_LOG Bot | (BACK_LOG) | **การแจ้งเตือนทั้งหมด** — System Alerts, Power Events, Config Backup, BACKLOG, escalation |
 | `TG_NOTIFICATION_CHAT_ID` | —            | —          | Chat ID ปลายทาง (เจ้าของระบบ) สำหรับทั้ง 2 bots                                           |
 
-**เส้นทางแจ้งเตือน (ทุก Agent):**
+**เส้นทางแจ้งเตือน (ทุก Agent และ System Services):**
 
-- **ZeeXa Bot:** ใช้เฉพาะการพูดคุยและสั่งงาน (ผู้ใช้ ↔ Sunday). ห้ามส่งเนื้อหาแจ้งเตือนผ่าน ZeeXa.
-- **BACK_LOG Bot:** การแจ้งเตือนทุกรูปแบบ (health, escalation, backup, power, ฯลฯ) ต้องส่งผ่านสคริปต์ `~/projects/openclaw/scripts/tg-notify.sh "ข้อความ"` เท่านั้น
-- ห้ามเรียก Telegram API โดยตรงหรือใช้ `TELEGRAM_BOT_TOKEN` สำหรับการแจ้งเตือน
-
-**คำสั่ง Manual ผ่าน Backlog Bot:** เจ้าของระบบสามารถสั่งปลุก/ปิด ryzenpc จากแชท Backlog ได้โดยส่ง `/wake_ryzenpc` หรือ `/sleep_ryzenpc` — ต้องรัน polling script บน minipc: `scripts/backlog-bot-commands.sh` (cron ทุก 2 นาที). ลงทะเบียนเมนูคำสั่งครั้งเดียว: `scripts/set-backlog-bot-commands.sh`. **ความปลอดภัย:** ต้องตั้ง `TG_BACKLOG_ALLOWED_UID` ใน `~/.openclaw/.env` เป็น Telegram user ID ของเจ้าของ — สคริปต์ปฏิเสธคำสั่งจาก user อื่นในห้องเดียวกัน. ดู SCRIPTS_REGISTRY.md § Backlog Telegram Bot
+- **ZeeXa Bot (Command Center):** ใช้เฉพาะการพูดคุยและสั่งงาน (Human ↔ Sunday/OpenClaw). **ห้าม** ใช้สำหรับส่ง Log หรือแจ้งเตือนอัตโนมัติจากสคริปต์
+- **BACK_LOG Bot (Security & Notification):** เป็นช่องทางหลักสำหรับการแจ้งเตือนทุกรูปแบบ (Health check, Auto-upgrade, Security alerts, Watchtower) ผ่านสคริปต์ `tg-notify.sh` หรือใช้ Token `TG_BACKLOG_BOT_TOKEN` โดยตรงในระบบอัตโนมัติ
+- **มาตรฐาน:** ทุกระบบอัตโนมัติที่ต้องการส่ง "รายงานสถานะ" ต้องใช้ BACK_LOG Bot เพื่อไม่ให้รบกวนช่องทางการสั่งงานหลักของ ZeeXa Bot
 
 ## 4. TECH_STACK
 
-- **backend:** TypeScript
-- **ui:** HTML/CSS/JS (Control UI)
 - **environment:** Docker container (image: `openclaw:local`, built from source)
 - **identity_auth:** Tailscale Serve (host) + Device Pairing + Token Auth
 
@@ -150,7 +145,7 @@ Ollama runs on ryzenpc at `http://100.82.51.31:11434` (bind `0.0.0.0`). Gateway 
 - **heartbeat:** `every 4h` (24/7) — tasks: [disk_check, system_load, docker_health, systemd_failed, security_updates]
 - **binding:** none — spawned via `sessions_spawn` by Sunday or Mother only
 - **lifecycle:** `non-persistent` — no always-on session; `sessions_list` shows nothing between invocations (NORMAL); ALWAYS invoke via `sessions_spawn` tool with `agentId: "father"`
-- **ssh_target:** `minipc` (Master Node) and `ryzenpc` (Worker Node) via `ssh_config` at workspace root
+- **ssh_target:** `minipc` (Master Node) via `ssh_config` at workspace root
 
 ### 5.5 DISPOSABLE SPECIALIST AGENTS
 
@@ -300,16 +295,6 @@ Ollama runs on ryzenpc at `http://100.82.51.31:11434` (bind `0.0.0.0`). Gateway 
 - **heartbeat:** none (on-demand)
 - **lifecycle:** non-persistent — spawned by mother or user for release tasks
 
-### 5.15 MONITOR: Proactive Health Watchdog
-
-- **id:** `monitor`
-- **role:** Proactive health watchdog — poll gateway port 18789, Docker, disk, memory; alert mother on anomaly
-- **workspace:** `~/.openclaw/workspace-monitor` (canonical in repo `agents/workspace-monitor/`)
-- **model_primary:** `openrouter/google/gemini-2.5-flash`
-- **permissions:** `read`, `exec`, `sessions_send`, `session_status`
-- **heartbeat:** every 15m (config in openclaw.json). **เมื่อใช้ openclaw-health.timer (OS-only server):** ตั้ง `heartbeat.every` เป็น `"24h"` หรือปิด เพื่อลดโทเคน — งาน server ทำโดยสคริปต์ระดับ OS แล้ว (§6b, §10.1c).
-- **lifecycle:** persistent (heartbeat-driven)
-
 ### 5.16 NOTIFIER: Telegram Notification Dispatcher
 
 - **id:** `notifier`
@@ -342,32 +327,40 @@ Ollama runs on ryzenpc at `http://100.82.51.31:11434` (bind `0.0.0.0`). Gateway 
 
 ## 6. CRITICAL_FILE_MAP
 
-- `~/.openclaw/openclaw.json`: Global settings, agent list, gateway auth
-- `projects/openclaw/.antigravityrules`: Critical operating standards for AI
-- `projects/openclaw/docs/AGENT_DESIGN_GUIDE.md`: Best practices for building AI agents
-- `projects/openclaw/docs/AGENT_STANDARD.md`: Single agent standard (workspace files, script-first heartbeat, TOOLS sync, invocation format)
-- `projects/openclaw/docs/agents/git-ops-agent.md`: Git-ops agent runbook and guardrails (fork-only push, no PR)
-- `projects/openclaw/agents/workspace-git-ops/`: Canonical workspace files for `git-ops` (copy to `~/.openclaw/workspace-git-ops/` after `agents add`)
-- `projects/openclaw/docs/workflows/local-inference.md`: Local inference (Ollama on ryzenpc) routing and VRAM/concurrency
-- `projects/openclaw/docs/workflows/n8n/`: n8n workflow templates (Ollama Task Router: coding/reasoning/vision/embedding/general/math/translation; Document Processing, Daily Health, SAIN local model)
-- `projects/openclaw/docs/AGENT_SCRIPT_FIRST.md`: Agent ↔ script mapping; ใช้สคริปต์แทนงาน routine, เรียก agent เมื่อจำเป็น
-- `projects/openclaw/docs/HEALTH_ESCALATION.md`: เมื่อสคริปต์แก้ไม่ได้ → เขียน health-escalation-pending.json; agent อ่านแล้วลองแก้, ส่ง Telegram เฉพาะเมื่อ agent แก้ได้หรือแก้ไม่ได้
-- `projects/openclaw/agents/workspace-architect/`, `workspace-deploy/`, `workspace-monitor/`, `workspace-notifier/`, `workspace-intel/`, `workspace-sot-keeper/`: Canonical workspace files for architect, deploy, monitor, notifier, intel, sot-keeper
+<!-- Paths: repo-root-relative for repo files; ~/.openclaw for state/host -->
+
+- `~/.openclaw/openclaw.json`: Global settings, agent list, gateway auth (never overwrite; use `openclaw config set` / `openclaw doctor --fix`)
+- `.antigravityrules`: Critical operating standards for AI (rules 0–20 + bookend)
+- `docs/AGENT_DESIGN_GUIDE.md`: Best practices for building AI agents
+- `docs/AGENT_STANDARD.md`: Single agent standard (workspace files, script-first heartbeat, TOOLS sync, invocation format)
+- `docs/agents/git-ops-agent.md`: Git-ops agent runbook and guardrails (fork-only push, no PR)
+- `agents/workspace-git-ops/`: Canonical workspace files for `git-ops` (copy to `~/.openclaw/workspace-git-ops/` after `agents add`)
+- `DetailHardware.md`: Hardware, nodes, network, SSH roles (device-specific or deployment advice)
+- `SCRIPTS_REGISTRY.md`: Script registry — which scripts exist and how to invoke them (§6b, docs/AGENT_SCRIPT_FIRST.md)
+- `docs/workflows/n8n/`: n8n workflow templates (Daily Health, SaaS automation)
+- `docs/AGENT_SCRIPT_FIRST.md`: Agent ↔ script mapping; ใช้สคริปต์แทนงาน routine, เรียก agent เมื่อจำเป็น
+- `docs/HEALTH_ESCALATION.md`: เมื่อสคริปต์แก้ไม่ได้ → เขียน health-escalation-pending.json; agent อ่านแล้วลองแก้, ส่ง Telegram เฉพาะเมื่อ agent แก้ได้หรือแก้ไม่ได้
+- `agents/workspace-architect/`, `workspace-deploy/`, `workspace-notifier/`, `workspace-intel/`, `workspace-sot-keeper/`: Canonical workspace files for architect, deploy, notifier, intel, sot-keeper
 - `~/.openclaw/knowledge-base/intel/`: Daily intel reports (YYYY-MM-DD.md)
 - `~/.openclaw`: State directory (Credentials, sessions, agent storage) — volume-mounted into container
-- `projects/openclaw/docker-compose.yml`: Docker service definition
-- `projects/openclaw/docker-compose.override.yml`: Local overrides (--tailscale off, bridge port) — gitignored
-- `projects/openclaw/.env`: Docker env vars (token, ports, image, config/workspace paths) — gitignored
-- `projects/openclaw/scripts/docker-rebuild.sh`: Rebuild image + recreate container in one command
+- `docker-compose.yml`: Docker service definition
+- `docker-compose.override.yml`: Local overrides (--tailscale off, bridge port) — gitignored
+- `.env`: Docker env vars (token, ports, image, config/workspace paths) — gitignored; at repo root when running from host
+- `scripts/docker-rebuild.sh`: Rebuild image + recreate container in one command
 
 ## 6b. SCRIPT_TOOLKIT (Script-First Pattern)
 
 - **Purpose:** ลดการใช้โทเคนโดยให้ agent เรียก shell script สำหรับงาน routine (health check, config validation, log scan, git preflight) แทนการให้ LLM ทำทุกครั้ง
 - **Registry:** `SCRIPTS_REGISTRY.md` — agent อ่านไฟล์นี้เพื่อดูว่ามีสคริปอะไรบ้างและเรียกอย่างไร. **Agent ↔ สคริปต์ และเมื่อไหร่เรียก agent:** `docs/AGENT_SCRIPT_FIRST.md`
 - **Ops scripts:** `scripts/ops/` — health-check.sh, gateway-recovery.sh (restart gateway + health-check + log tail), **health-check-fix-or-escalate.sh** (พบ error → รันสคริปต์แก้ → ถ้าหายเงียบ; ถ้าไม่หายเขียน `~/.openclaw/health-escalation-pending.json` ไม่ส่ง Telegram — agent อ่านแล้วลองแก้, ส่ง Telegram เฉพาะเมื่อ agent แก้ได้หรือ agent แก้ไม่ได้ ดู `docs/HEALTH_ESCALATION.md`), **post-reboot-diagnosis.sh** (หาสาเหตุ server ล่มหลัง manual reboot — อ่าน journalctl -b -1 หา OOM/panic), config-validate.sh, log-scan.sh, system-report.sh, git-preflight.sh, agent-list.sh (output JSON สำหรับ agent)
-- **Pattern:** Big model วางแผน/สั่งงาน → small model หรือ script ทำ execution. Heartbeat ของ monitor, father, mother, sunday, sot-keeper ควรรันสคริปก่อน; ถ้าผล OK ไม่ต้องใช้ LLM
-- **OS-level recovery (จำเป็นสำหรับกู้ gateway):** Agent (Monitor → Mother) รัน**ภายใน gateway** หรือต้องใช้ gateway เพื่อ spawn Father — เมื่อ **gateway เองล่มหรือ restart loop** agent จะรันไม่ได้ จึงกู้คืนเองไม่ได้. การกู้ต้องทำที่ **ระดับ OS**: ใช้ systemd timer รัน **health-check-fix-or-escalate.sh** ทุก 15 นาที. Script รัน health-check → ถ้าไม่ ok รัน gateway-recovery.sh → ตรวจซ้ำ → ถ้าหาย exit 0 เงียบ; ถ้ายังไม่หายเขียน `~/.openclaw/health-escalation-pending.json` (ไม่ส่ง Telegram). Agent อ่านไฟล์นี้แล้วลองแก้; **ส่ง Telegram เฉพาะเมื่อ agent แก้ได้หรือ agent แก้ไม่ได้** (ดู `docs/HEALTH_ESCALATION.md`). Timer: `scripts/systemd-user/openclaw-health.timer` + `.service`. Copy ไป `~/.config/systemd/user/` แล้ว `systemctl --user enable --now openclaw-health.timer`.
-- **Server health แบบ OS-only (ลดโทเคนสูงสุด):** เมื่อ **openclaw-health.timer เปิดอยู่** งานที่เกี่ยวกับ server (health check, CRITICAL → recovery, แจ้ง Telegram) ทำโดยสคริปต์ระดับ OS ทั้งหมด — **ไม่ต้องใช้ Monitor agent**. แนะนำ: **ปิดหรือลด Monitor heartbeat** ใน `openclaw.json` (ตั้ง `heartbeat.every` ของ monitor เป็น `"24h"` หรือปิด) เพื่อไม่ให้ Monitor ถูกเรียกทุก 15 นาที; จะลดการใช้โทเคนได้มาก. Monitor ยังใช้ได้เมื่อ Mother/คนสั่ง spawn เพื่อตรวจเพิ่มหรือวิเคราะห์ anomaly แบบละเอียด.
+- **Pattern:** Big model วางแผน/สั่งงาน → small model หรือ script ทำ execution. Heartbeat ของ father, mother, sunday, sot-keeper ควรรันสคริปก่อน; ถ้าผล OK ไม่ต้องใช้ LLM
+- **OS-level recovery (จำเป็นสำหรับกู้ gateway):** Agent รัน**ภายใน gateway** หรือต้องใช้ gateway เพื่อ spawn Father — เมื่อ **gateway เองล่มหรือ restart loop** agent จะรันไม่ได้ จึงกู้คืนเองไม่ได้. การกู้ต้องทำที่ **ระดับ OS**: ใช้ systemd timer รัน **health-check-fix-or-escalate.sh** ทุก 15 นาที. Script รัน health-check → ถ้าไม่ ok รัน gateway-recovery.sh → ตรวจซ้ำ → ถ้าหาย exit 0 เงียบ; ถ้ายังไม่หายเขียน `~/.openclaw/health-escalation-pending.json` (ไม่ส่ง Telegram). Agent อ่านไฟล์นี้แล้วลองแก้; **ส่ง Telegram เฉพาะเมื่อ agent แก้ได้หรือ agent แก้ไม่ได้** (ดู `docs/HEALTH_ESCALATION.md`). Timer: `scripts/systemd-user/openclaw-health.timer` + `.service`. Copy ไป `~/.config/systemd/user/` แล้ว `systemctl --user enable --now openclaw-health.timer`.
+- **Server health แบบ OS-only (ลดโทเคนสูงสุด):** เมื่อ **openclaw-health.timer เปิดอยู่** งาน server (health check, CRITICAL → recovery, แจ้ง Telegram) ทำโดยสคริปต์ระดับ OS ทั้งหมด. งาน server ไม่ใช้โทเคนจาก agent อีก. ดู §10.1d.
+- **SOT Enforcement System (3 layers):** ป้องกัน ANTIGRAVITY.md drift เมื่อ agent เปลี่ยน structural files:
+  - **Layer 1 — pre-commit hook** (`scripts/ops/pre-commit-sot-check.sh`): บล็อก commit ที่แตะ `openclaw.json`, `DetailHardware.md`, `SOUL.md`, `IDENTITY.md` โดยไม่ stage `ANTIGRAVITY.md`. ลงทะเบียนไว้ใน `git-hooks/pre-commit` (repo's `core.hooksPath`). Bypass: `SKIP_SOT_CHECK=1 git commit ...` (ฉุกเฉินเท่านั้น).
+  - **Layer 2 — gen-agent-index.sh** (`scripts/ops/gen-agent-index.sh`): re-generate ตาราง agent ใน `## Agents` section ของ `SYSTEM_INDEX.md` จาก `openclaw.json` อัตโนมัติ. Exit 0 = clean, exit 1 = drift fixed, exit 2 = error. sot-keeper รัน script นี้ก่อน LLM ทุก heartbeat.
+  - **Layer 3 — systemd path watcher** (`openclaw-sot-sync.path` + `.service`): trigger Layer 2 real-time เมื่อ `openclaw.json` หรือ `DetailHardware.md` เปลี่ยน. ใช้ `PathChanged=` (รองรับ atomic write). Install: `cp scripts/systemd-user/openclaw-sot-sync.{path,service} ~/.config/systemd/user/ && systemctl --user enable --now openclaw-sot-sync.path`.
+  - **หมายเหตุ:** Layer 1 flag เท่านั้น — ไม่ auto-overwrite prose ของ ANTIGRAVITY.md. Human/agent ต้องอัปเดต §5 (AGENT_DEFINITIONS), §3 (HARDWARE_INFRASTRUCTURE) ด้วยตนเอง.
 
 ## 7. ACTIVE_ENVIRONMENT_STATE
 
@@ -375,14 +368,14 @@ Ollama runs on ryzenpc at `http://100.82.51.31:11434` (bind `0.0.0.0`). Gateway 
 - **gateway_port:** `18789` (host)
 - **bridge_port:** `18791` (host) → `18790` (container)
 - **ui_allowed_origins:** [`https://home-server.taila0574b.ts.net`]
-- **active_agents:** [`mother`, `sunday`, `dev`, `father`, `researcher`, `log-analyzer`, `qa-tester`, `mother-relay`, `sain-evaluator`, `qa-reviewer`, `agora-host`, `red-team`, `coder`, `code-analyst`, `doc-writer`, `git-ops`, `architect`, `deploy`, `monitor`, `notifier`, `intel`, `sot-keeper`]
+- **active_agents:** [`mother`, `sunday`, `dev`, `father`, `researcher`, `log-analyzer`, `qa-tester`, `mother-relay`, `sain-evaluator`, `qa-reviewer`, `agora-host`, `red-team`, `coder`, `code-analyst`, `doc-writer`, `git-ops`, `architect`, `deploy`, `notifier`, `intel`, `sot-keeper`]
 - **default_agent:** `sunday`
 - **orchestration:** `enabled` (maxConcurrent: 10)
 - **runtime:** systemd user service `openclaw-gateway.service` (primary)
 - **systemd_service:** enabled — gateway runs via systemd; use `systemctl --user enable --now openclaw-gateway.service`
 - **Docker gateway:** opt-in only — use profile `docker-gateway` to run gateway in Docker; do not start when systemd is primary (port 18789 conflict). See §7.0.
-- **n8n:** Workflow automation on minipc — container `sain-n8n` port `5678` (PostgreSQL backend, Basic Auth). Image: `docker.n8n.io/n8nio/n8n:latest` (current 2.10.3). Access: `http://100.96.9.50:5678`. Workflow templates: `docs/workflows/n8n/`. Ollama (ryzenpc) in workflows: `http://100.82.51.31:11434`. **Update:** pull `docker.n8n.io/n8nio/n8n:latest`, stop/rm `sain-n8n`, recreate with same env/volumes/network. After Docker restart, reconnect network: `docker network connect sain_network sain-n8n` then `docker restart sain-n8n`.
-- **Open WebUI:** Web UI for Ollama on minipc — container `open-webui` port `3000` (UI) → Ollama on ryzenpc `http://100.82.51.31:11434`. Image: `ghcr.io/open-webui/open-webui:main`. Access: `http://100.96.9.50:3000`. Setup: `docs/workflows/open-webui/` (compose: `docker compose -f docs/workflows/open-webui/docker-compose.example.yml up -d`). First run: create admin user in UI. Requires minipc and ryzenpc on same Tailscale; if connection fails, try `network_mode: host` and use port 8080.
+- **n8n:** Workflow automation on minipc — container `sain-n8n` port `5678` (PostgreSQL backend, Basic Auth). Image: `docker.n8n.io/n8nio/n8n:latest` (current 2.10.3). Access: `http://100.96.9.50:5678`. Workflow templates: `docs/workflows/n8n/`. **Update:** pull `docker.n8n.io/n8nio/n8n:latest`, stop/rm `sain-n8n`, recreate with same env/volumes/network. After Docker restart, reconnect network: `docker network connect sain_network sain-n8n` then `docker restart sain-n8n`.
+- **Open WebUI:** Web UI for Ollama on minipc — container `open-webui` port `3000` (UI). Image: `ghcr.io/open-webui/open-webui:main`. Access: `http://100.96.9.50:3000`. Setup: `docs/workflows/open-webui/` (compose: `docker compose -f docs/workflows/open-webui/docker-compose.example.yml up -d`). First run: create admin user in UI.
 
 ## 7.0 GATEWAY_SINGLE_RUNTIME (systemd vs Docker)
 
@@ -398,12 +391,12 @@ Ollama runs on ryzenpc at `http://100.82.51.31:11434` (bind `0.0.0.0`). Gateway 
 
 - **profile:** `docker-gateway` — start with `docker compose --profile docker-gateway up -d`. Do not use when systemd is primary (port 18789).
 - **container:** `openclaw-openclaw-gateway-1`
-- **image:** `openclaw:local` (built from `projects/openclaw/Dockerfile`)
+- **image:** `openclaw:local` (built from repo root `Dockerfile`)
 - **config_mount:** `~/.openclaw` → `/home/node/.openclaw`
 - **workspace_mount:** `~/.openclaw/workspace` → `/home/node/.openclaw/workspace`
 - **tailscale:** managed by host; container uses `--tailscale off` (override in `docker-compose.override.yml`)
 - **healthcheck:** TCP probe to port 18789 every 30s, 3 retries, 20s start period
-- **rebuild_script:** `bash projects/openclaw/scripts/docker-rebuild.sh` (builds image + recreates container)
+- **rebuild_script:** `bash scripts/docker-rebuild.sh` (from repo root; builds image + recreates container)
 - **restart:** `docker compose -f docker-compose.yml -f docker-compose.override.yml restart openclaw-gateway`
 - **logs:** `docker compose -f docker-compose.yml -f docker-compose.override.yml logs -f openclaw-gateway`
 - **cli:** `docker compose -f docker-compose.yml run --rm openclaw-cli <command>`
@@ -417,7 +410,7 @@ OpenClaw parses the prefix before the first `/` as the provider name.
 - ❌ WRONG: `anthropic/claude-opus-4-6` → tries provider=`anthropic` directly → no API key → fails
 - ❌ WRONG: `openai/gpt-5.2` → tries provider=`openai` directly → no API key → fails
 
-**Rule:** Cloud models: prefix `openrouter/`. Local (Ollama on ryzenpc): prefix `ollama/` (e.g. `ollama/qwen2.5-coder:7b`). Bare `anthropic/` or `openai/` fail (no direct API keys).
+**Rule:** Cloud models: prefix `openrouter/`. Bare `anthropic/` or `openai/` fail (no direct API keys).
 
 ## 7.3 SANDBOX_IN_DOCKER
 
@@ -645,7 +638,7 @@ Deliverables: [Expected output format]
 - **intel agent** runs daily at 06:00 Asia/Bangkok; spawns **researcher** to gather from: OpenRouter models/pricing, OpenClaw GitHub releases, AI news, Hacker News, Reddit (r/MachineLearning, r/LocalLLaMA), GitHub trending.
 - **Synthesis:** intel writes `~/.openclaw/knowledge-base/intel/YYYY-MM-DD.md` and flags actionable items.
 - **Approval chain:** intel does not execute changes; it sends findings to **mother**. Mother applies decision matrix (model upgrade → update openclaw.json; security advisory → architect + notifier; package update → spawn father; technique update → backlog LOW; routine digest → notifier).
-- **Self-update boundary:** Model switch and SOUL.md changes require mother approval. Security patches: auto-forward to architect and notify user. No auto-update to production without qa-tester + monitor confirm when applicable.
+- **Self-update boundary:** Model switch and SOUL.md changes require mother approval. Security patches: auto-forward to architect and notify user. No auto-update to production without qa-tester confirm when applicable.
 
 ## 10. INCIDENT_ESCALATION_PROTOCOL
 
@@ -680,7 +673,6 @@ Agent (self-resolve, 1 retry)
 
 ### 10.1c WHY_AGENTS_DID_NOT_RECOVER (และแก้อย่างไร)
 
-- **ทำไม Agent (Monitor/Mother) ถึงไม่กู้ server ได้:** Monitor รันจาก **heartbeat ภายใน gateway**; เมื่อ gateway ล่มหรือ restart loop กระบวนการ gateway ไม่อยู่ตัว จึงไม่มี agent ใดรันได้. Mother ต้องใช้ gateway เพื่อ spawn Father หรือสั่ง recovery — ถ้า gateway ดับ วงจรนี้ทำงานไม่ได้. ดังนั้น **การกู้เมื่อ gateway เองเป็นปัญหา ต้องทำที่ระดับ OS ไม่ใช่โดย agent**.
 - **การออกแบบที่ถูก:** ใช้ **systemd timer** (ไม่ขึ้นกับ gateway) รัน health-check ทุก 15 นาที; ถ้า CRITICAL ให้ **รัน gateway-recovery.sh อัตโนมัติ**. สคริปต์ `health-check-and-recover.sh` ทำหน้าที่นี้; service ของ timer ต้องชี้ไปที่ script นี้ และ **ต้อง enable timer** บน host ที่รัน gateway จึงจะมีการกู้อัตโนมัติ.
 - **ตรวจสอบ:** `systemctl --user list-timers` ควรเห็น `openclaw-health.timer`; ถ้าไม่มี ให้ copy `scripts/systemd-user/openclaw-health.*` ไป `~/.config/systemd/user/` แล้ว `systemctl --user enable --now openclaw-health.timer`.
 
@@ -689,7 +681,7 @@ Agent (self-resolve, 1 retry)
 เมื่อ **openclaw-health.timer เปิดอยู่** งาน server (health check, กู้ gateway, แจ้ง Telegram เมื่อ CRITICAL) ทำโดยสคริปต์ระดับ OS ทั้งหมด. เพื่อลดการใช้โทเคนให้มากที่สุด:
 
 1. เปิด timer ตาม §10.1c (ต้องทำอยู่แล้วถ้าต้องการ auto-recovery).
-2. **ปิดหรือลด Monitor heartbeat:** ใน `openclaw.json` ตั้ง `agents.entries[monitor].heartbeat.every` เป็น `"24h"` หรือลบ/ปิด heartbeat — Monitor จะไม่ถูกเรียกทุก 15 นาที; งาน server ไม่ใช้โทเคนจาก agent อีก. ดู §6b.
+2. งาน server ไม่ใช้โทเคนจาก agent อีก. ดู §6b.
 
 ### 10.2 INCIDENT_RECORD_FORMAT
 
@@ -743,10 +735,11 @@ Agent (self-resolve, 1 retry)
 
 ---
 
-## 11. CRITICAL_CONSTRAINTS_REMINDER
+## 11. CRITICAL_CONSTRAINTS_REMINDER (Bookend)
 
 <!-- Bookend — ซ้ำกฎที่สำคัญที่สุดจาก Section 0 เพื่อป้องกัน Lost-in-Middle Effect -->
 <!-- AI อ่านจุดเริ่มต้นและจุดสิ้นสุดของเอกสารดีที่สุด — ตรงกลางมีโอกาสถูกลืม ~30% -->
+<!-- See also: .antigravityrules (RULE_0, RULE_20, BOOKEND) -->
 
 - **execution_verification_checklist:**
   1. **model_strings:** "Prefix with `openrouter/` ONLY (e.g. `openrouter/anthropic/...`). Bare `anthropic/` fails."
@@ -757,7 +750,3 @@ Agent (self-resolve, 1 retry)
   6. **hallucination_gate:** "If data missing in sources → reply 'ไม่พบข้อมูลใน [files checked]'. NEVER guess or assume."
 
 ---
-
-```
-
-```
