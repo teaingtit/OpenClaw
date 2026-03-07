@@ -3,6 +3,12 @@
 set -euo pipefail
 
 ROOT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+
+# SOT enforcement: block commits that change structural files without updating ANTIGRAVITY.md
+if [[ -x "$ROOT_DIR/scripts/ops/pre-commit-sot-check.sh" ]]; then
+  "$ROOT_DIR/scripts/ops/pre-commit-sot-check.sh"
+fi
+
 RUN_NODE_TOOL="$ROOT_DIR/scripts/pre-commit/run-node-tool.sh"
 FILTER_FILES="$ROOT_DIR/scripts/pre-commit/filter-staged-files.mjs"
 
