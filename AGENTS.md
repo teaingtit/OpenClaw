@@ -105,22 +105,38 @@
 - **ts_execution_preference:** "PREFER Bun for TypeScript execution (scripts, dev, tests): `bun <file.ts>` / `bunx <tool>`."
 - **run_cli_dev:** "`pnpm openclaw ...` (bun) or `pnpm dev`."
 - **node_production_support:** "Node remains supported for running built output (`dist/*`) and production installs."
-- **mac_packaging_dev:** "`scripts/package-mac-app.sh` defaults to current arch. Release checklist: `docs/platforms/m- Language: TypeScript (ESM). Prefer strict typing; avoid `any`.
-- Formatting/linting via Oxlint and Oxfmt; run `pnpm check` before commits.
-- Never add `@ts-nocheck` and do not disable `no-explicit-any`; fix root causes and update Oxlint/Oxfmt config only when required.
-- Dynamic import guardrail: do not mix `await import("x")` and static `import ... from "x"` for the same module in production code paths. If you need lazy loading, create a dedicated `*.runtime.ts` boundary (that re-exports from `x`) and dynamically import that boundary from lazy callers only.
-- Dynamic import verification: after refactors that touch lazy-loading/module boundaries, run `pnpm build` and check for `[INEFFECTIVE_DYNAMIC_IMPORT]` warnings before submitting.
-- Never share class behavior via prototype mutation (`applyPrototypeMixins`, `Object.defineProperty` on `.prototype`, or exporting `Class.prototype` for merges). Use explicit inheritance/composition (`A extends B extends C`) or helper composition so TypeScript can typecheck.
-- If this pattern is needed, stop and get explicit approval before shipping; default behavior is to split/refactor into an explicit class hierarchy and keep members strongly typed.
-- In tests, prefer per-instance stubs over prototype mutation (`SomeClass.prototype.method = ...`) unless a test explicitly documents why prototype-level patching is required.
-- Add brief code comments for tricky or non-obvious logic.
-- Keep files concise; extract helpers instead of “V2” copies. Use existing patterns for CLI options and dependency injection via `createDefaultDeps`.
-- Aim to keep files under ~700 LOC; guideline only (not a hard guardrail). Split/refactor when it improves clarity or testability.
-- Naming: use **OpenClaw** for product/app/docs headings; use `openclaw` for CLI command, package/binary, paths, and config keys.
-- Written English: use American spelling and grammar in code, comments, docs, and UI strings (e.g. "color" not "colour", "behavior" not "behaviour", "analyze" not "analyse").s`."
+- **mac_packaging_dev:** "`scripts/package-mac-app.sh` defaults to current arch. Release checklist: `docs/platforms/mac/release.md`."
+- **type_check_build:** "`pnpm build`"
+- **build_tool:** "tsdown (outputs to `dist/`)."
+- **ts_checks:** "`pnpm tsgo`"
+- **lint_format_all:** "`pnpm check`"
+- **format_check_only:** "`pnpm format` (oxfmt --check)"
+- **format_fix:** "`pnpm format:fix` (oxfmt --write)"
+- **test_suite:** "`pnpm test` (vitest via `scripts/test-parallel.mjs`); coverage: `pnpm test:coverage`"
+- **test_unit_fast:** "`pnpm test:fast` — runs unit tests only without the parallel orchestration overhead."
+- **test_single_file:** "`vitest run <path/to/file.test.ts>` — run one test file directly."
+- **test_watch:** "`pnpm test:watch` — interactive vitest watcher during development."
+
+## Coding Style & Naming Conventions
+
+> กฎการเขียนโค้ดและตั้งชื่อ
+
+- **language:** "TypeScript (ESM). Prefer strict typing; AVOID `any`."
+- **cli_framework:** "Commander for CLI wiring + @clack/prompts for interactive TTY prompts."
+- **esm_import_extension:** "Use `.js` extension for cross-package/cross-module imports (ESM requirement). Type-only: `import type { X } from './x.js'`."
+- **anti_redundancy:** "NEVER create re-export wrapper files. Import directly from the original source. Before writing any formatter/utility/helper, search for an existing one first."
+- **source_of_truth_utilities:** "Time formatting: `src/infra/format-time`. Tables: `src/terminal/table.ts` (`renderTable`). Colors/theme: `src/terminal/theme.ts` (`theme.success`, `theme.muted`, etc.). Progress/spinners: `src/cli/progress.ts`."
+- **linting_formatting:** "Formatting/linting via Oxlint and Oxfmt; run `pnpm check` before commits."
+- **no_ts_bypass:** "NEVER add `@ts-nocheck` and do NOT disable `no-explicit-any`; fix root causes and update Oxlint/Oxfmt config only when required."
+- **dynamic_import_guardrail:** "Do not mix `await import(\"x\")` and static `import ... from \"x\"` for the same module in production code paths. If you need lazy loading, create a dedicated `*.runtime.ts` boundary (that re-exports from `x`) and dynamically import that boundary from lazy callers only."
+- **dynamic_import_verification:** "After refactors that touch lazy-loading/module boundaries, run `pnpm build` and check for `[INEFFECTIVE_DYNAMIC_IMPORT]` warnings before submitting."
+- **prototype_mutation_ban:** "NEVER share class behavior via prototype mutation (`applyPrototypeMixins`, `Object.defineProperty` on `.prototype`, or exporting `Class.prototype` for merges). Use explicit inheritance/composition (`A extends B extends C`) or helper composition so TypeScript can typecheck."
+- **prototype_exception:** "If this pattern is needed, stop and get explicit approval before shipping; default behavior is to split/refactor into an explicit class hierarchy and keep members strongly typed."
+- **test_mocking:** "In tests, prefer per-instance stubs over prototype mutation (`SomeClass.prototype.method = ...`) unless a test explicitly documents why prototype-level patching is required."
+- **code_comments:** "Add brief code comments for tricky or non-obvious logic."
+- **file_length_and_helpers:** "Keep files concise; extract helpers instead of 'V2' copies. Use existing patterns for CLI options and dependency injection via `createDefaultDeps`."
 - **loc_guideline:** "Aim to keep files under ~700 LOC; guideline only (not a hard guardrail). Split/refactor when it improves clarity or testability."
 - **naming_conventions:** "Use **OpenClaw** for product/app/docs headings; use `openclaw` for CLI command, package/binary, paths, and config keys."
->>>>>>> a99b73aba07 (docs: add ANTIGRAVITY, DetailHardware, agent design guide; update AGENTS.md)
 
 ## Release Channels (Naming)
 

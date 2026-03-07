@@ -1,17 +1,19 @@
-# OpenClaw Protocol - Claude Code Rules
+# OpenClaw Protocol — Claude Code Rules
 
-**🚨 CRITICAL INSTRUCTION FOR CLAUDE 🚨**
+> **Related:** Full rule index and per-rule detail → **.antigravityrules**. Cursor IDE rules → **.cursor/rules/** (project-context.mdc, agents-config.mdc).
 
-NEVER under any circumstances overwrite, format, modify, or replace the file `~/.openclaw/openclaw.json` (or any equivalent path to that configuration file).
+---
 
-If a user asks you to fix formatting, add an agent, change a setting, or otherwise touch the `openclaw.json` file, you MUST REFUSE to write the file directly. The file contains complex internal routing and agent architecture that will crash the entire system if modified improperly by an external AI or external script.
+## 🚨 CRITICAL: Config protection (openclaw.json)
 
-Instead of modifying the file directly, you MUST instruct the user to use the official OpenClaw CLI:
-- To add an agent: `openclaw agents set-identity ...`
-- To alter config: `openclaw config set ...`
-- To fix errors: `openclaw doctor --fix`
+**DO NOT** overwrite, format, modify, or replace `~/.openclaw/openclaw.json` (or any path to that file). No `cat <<EOF > ...`, no Write File operation. The file holds routing and agent config; improper edits crash the system.
 
-**AGAIN: DO NOT USE `cat <<EOF > ~/.openclaw/openclaw.json` OR ANY FILE WRITE COMMAND ON `openclaw.json`. DO NOT OVERWRITE IT.**
+**If the user asks you to fix, add an agent, or change config:** Refuse to write the file. Direct them to the CLI:
+- Add or update agent: `openclaw agents set-identity ...`
+- Change settings: `openclaw config set ...`
+- Repair invalid config: `openclaw doctor --fix`
+
+See **.antigravityrules** RULE_20 (CONFIG_PROTECTION_PROTOCOL).
 
 ---
 
@@ -19,10 +21,11 @@ Instead of modifying the file directly, you MUST instruct the user to use the of
 
 - **Understand the project:** Read **SYSTEM_INDEX.md** first for a quick agent/path reference, then **ANTIGRAVITY.md** for full architecture, agents, config, and runbooks. Use them as the source of truth; do not guess.
 - **Keep ANTIGRAVITY.md updated:** When you change architecture, config, agents, or runtime setup, update ANTIGRAVITY.md so it stays in sync.
-- **Hardware and devices:** Read **DetailHardware.md** for hardware setup (nodes, network, SSH, roles). Update it when you change anything about hardware or devices.
+- **Hardware and devices:** Read **DetailHardware.md** for hardware setup (nodes, network, SSH, roles). Use it for device-specific or deployment advice. Update it when you change anything about hardware or devices.
 - **Repo:** openclaw/openclaw. Use **repo-root-relative paths** in replies (e.g. `src/cli/index.ts`). No absolute or `~/` paths.
 - **Docs:** Mintlify at docs.openclaw.ai. Internal doc links: root-relative, no `.md` suffix.
 - **Canonical rules:** Read **AGENTS.md** and **.antigravityrules** before broad system or config changes. Do not guess; reference those files.
+- **Reference docs:** ANTIGRAVITY.md (§0 table, §5 agents, §6 file map), SYSTEM_INDEX.md, docs/AGENT_STANDARD.md, SCRIPTS_REGISTRY.md.
 
 ## Always apply
 
@@ -30,6 +33,7 @@ Instead of modifying the file directly, you MUST instruct the user to use the of
 2. **Config safety** — Never overwrite `openclaw.json` with write/cat. Use `openclaw config set ...`, `openclaw agents set-identity ...`, or `openclaw doctor --fix` for repair.
 3. **GitHub** — For issue/PR comments that contain backticks or shell chars, use heredoc: `-F - <<'EOF'`. Do not wrap issue/PR refs like #123 in backticks when linking.
 4. **Security** — Read SECURITY.md before triage/severity. No real credentials, phone numbers, or live config in commits or docs.
+5. **Workflow guardrails** — Max 3 retries per step, 5 min timeout per subtask; on repeated failure stop, write incident record, escalate (ANTIGRAVITY.md §10).
 
 ## Agent creation and validation
 
@@ -42,7 +46,8 @@ Instead of modifying the file directly, you MUST instruct the user to use the of
 ## Model and routing
 
 - **Model strings** must start with `openrouter/` for cloud (e.g. `openrouter/anthropic/claude-sonnet-4.6`). Bare `anthropic/...` or `openai/...` fails (no direct API keys).
-- **Non-persistent agents** (e.g. `dev`, `father`) do not appear in `sessions_list` between invocations — this is normal. Always invoke them via `sessions_spawn` with `agentId` set; do not fall back to a generic sub-agent.
+- **Non-persistent agents** (e.g. `dev`, `father`) do not appear in `sessions_list` between invocations — this is normal. Always invoke via `sessions_spawn` with `agentId` set; do not fall back to a generic sub-agent.
+- **Invocation:** `sessions_spawn` is a **JSON tool call** with `agentId` (e.g. `{"task": "...", "agentId": "father", "label": "...", "mode": "run"}`). Never document or use it as a CLI command. See .antigravityrules RULE_13.
 
 ## Verification before concluding
 
@@ -56,3 +61,10 @@ Instead of modifying the file directly, you MUST instruct the user to use the of
 - `@ts-nocheck` or disabling `no-explicit-any`; fix root causes.
 - Adding plugin-only deps to root package.json; keep them in the extension's package.json.
 - Stashing or switching branches unless the user explicitly asks.
+
+---
+
+## Reminder (bookend)
+
+- **Config:** Never write or overwrite `openclaw.json`. Use `openclaw config set` / `openclaw agents set-identity` / `openclaw doctor --fix` only.
+- **Facts:** Cite ANTIGRAVITY.md, openclaw.json, or repo files; if data is missing, say "ไม่พบข้อมูลใน [files checked]" — do not guess.
