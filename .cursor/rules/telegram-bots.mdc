@@ -1,0 +1,16 @@
+---
+description: Telegram bot configuration, roles, and notification pathways
+alwaysApply: false
+---
+
+# Telegram Bots
+
+OpenClaw uses two distinct Telegram Bots with strict role separation. Tokens are stored in `~/.openclaw/.env`.
+
+- **ZeeXa Bot (`TELEGRAM_BOT_TOKEN`):** 
+  - **Purpose:** Command Center and Chat. Human ↔ Sunday/OpenClaw conversation.
+  - **Constraint:** NEVER use this bot for automated system alerts, script outputs, or background logs.
+- **BACK_LOG Bot (`TG_BACKLOG_BOT_TOKEN`):** 
+  - **Purpose:** Security & Notifications. Used for Watchtower, health checks, auto-upgrades, and script alerts.
+  - **Constraint:** Use the script `~/projects/openclaw/scripts/tg-notify.sh "Message"` to send notifications from bash scripts. Do not call the Telegram API manually if the script can be used.
+- **Reference:** See **ANTIGRAVITY.md §3b (TELEGRAM_BOT_REGISTRY)** for the ultimate source of truth regarding bot routing.

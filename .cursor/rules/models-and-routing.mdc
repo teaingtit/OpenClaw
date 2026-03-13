@@ -1,0 +1,14 @@
+---
+description: Rules for specifying AI models, routing configurations, and OpenRouter usage
+alwaysApply: false
+---
+
+# Models and Routing
+
+- **Model String Format:** All cloud model strings MUST be prefixed with `openrouter/` (e.g., `openrouter/anthropic/claude-sonnet-4.6`). 
+- **Direct APIs:** DO NOT use bare names like `anthropic/...` or `openai/...` directly, as there are no direct API keys configured. Attempting to do so will result in an immediate failure.
+- **Model Tiers:** Reference **ANTIGRAVITY.md §8 (ROUTING_MODELS)** when choosing models for agents. Do not guess the model tier.
+  - Use *Coding & Development* tier (e.g. `minimax-m2.5`, `gpt-5.2`) for intense coding agents like `dev` and `coder`.
+  - Use *Reasoning & Complex Tasks* for analysis and master controllers.
+  - Use *General Use & Value* (e.g. `gemini-2.5-flash`, `deepseek-v3.2`) for routine, low-cost, or chat-heavy delegation tasks.
+- **Config file:** Keep `~/.openclaw/openclaw.json` updated with the accurate model strings if changes are needed, but never overwrite it manually with `cat` or `echo`. Use `openclaw agents set-identity` or edit via scripts securely.

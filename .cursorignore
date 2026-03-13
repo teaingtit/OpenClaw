@@ -1,0 +1,51 @@
+# Cursor index ignore — reduces index size, avoids exposing secrets/generated content to AI context.
+# Patterns follow .gitignore-style; add one pattern per line.
+
+# Dependencies and lockfiles
+node_modules
+**/node_modules/
+pnpm-lock.yaml
+bun.lock
+bun.lockb
+package-lock.json
+
+# Build and coverage output
+dist
+coverage
+**/.next/
+**/out/
+**/build/
+*.tsbuildinfo
+
+# Secrets and local config (never index)
+.env
+.env.*
+!.env.example
+docker-compose.extra.yml
+**/credentials/
+**/.openclaw/
+
+# Agent/local state and memory (sensitive, large)
+memory/
+.agents/
+.agent/
+.ant-colony/
+.claude/
+.local/
+docs/.local/
+
+# Large/vendor and generated artifacts
+vendor/
+**/__pycache__/
+*.pyc
+.worktrees/
+ui/src/ui/__screenshots__/
+ui/playwright-report/
+ui/test-results/
+**/.gradle/
+**/.cxx/
+**/.kotlin/
+**/ModuleCache/
+*.ipa
+*.dSYM.zip
+*.mobileprovision

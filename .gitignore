@@ -21,6 +21,10 @@ ui/test-results/
 packages/dashboard-next/.next/
 packages/dashboard-next/out/
 
+# Personal local workflows (not part of openclaw source)
+n8n-workflows/
+.venv_worker/
+
 # Mise configuration files
 mise.toml
 

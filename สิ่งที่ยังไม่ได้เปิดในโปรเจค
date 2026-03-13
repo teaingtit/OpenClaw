@@ -1,0 +1,369 @@
+# OpenClaw Capabilities Reference
+> ความสามารถทั้งหมดของ OpenClaw — สิ่งที่เปิดใช้แล้วและสิ่งที่เปิดเพิ่มได้ในอนาคต
+> อัปเดต: 2026-03-09
+
+---
+
+## สถานะปัจจุบัน (เปิดแล้ว)
+
+| Feature | สถานะ | หมายเหตุ |
+|---------|--------|---------|
+| Telegram channel | ✅ | DM + Group |
+| Sunday agent (gemini-2.5-flash) | ✅ | Sole persistent agent |
+| Sub-agent spawning (gpt-5.2 / opus-4-6) | ✅ | Ephemeral, max depth 2 |
+| Memory system Provider: Local (node-llama-cpp) Model: nomic-embed-text-v1.5.Q4_K_M.gguf
+| Browser automation (Playwright) | ✅ | Headless mode |
+| Cron jobs | ✅ | สร้าง job ผ่าน CLI หรือ config |
+| Web Control UI | ✅ | `https://home-server.taila0574b.ts.net` |
+| Heartbeat (1h) | ✅ | health-check.sh (script-first) |
+| Crash recovery | ✅ | auto-spawn Sunday on kernel crash |
+| Full filesystem access | ✅ | workspaceOnly=false |
+| Sudo (NOPASSWD ALL) | ✅ | ไม่มีข้อจำกัด |
+
+---
+
+## Messaging Channels (เปิดเพิ่มได้)
+
+### Built-in Channels
+| Channel | วิธีเปิด | ต้องการ |
+|---------|---------|--------|
+| **Discord** | `openclaw channels login discord` | Bot token จาก Discord Developer Portal |
+| **Slack** | `openclaw channels login slack` | Slack App (Bot Token + Signing Secret) |
+| **WhatsApp** | `openclaw channels login whatsapp` | QR scan จากมือถือ (ใช้ Baileys/WhatsApp Web) |
+| **Signal** | `openclaw channels login signal` | signal-cli + เบอร์โทรที่ลงทะเบียน |
+| **iMessage** | `openclaw channels login imessage` | macOS + BlueBubbles server |
+| **Google Chat** | `openclaw channels login googlechat` | Google Workspace App |
+| **IRC** | `openclaw channels login irc` | IRC server + nick |
+| **Line** | config ใน `openclaw.json` | LINE Messaging API channel |
+
+### Extension Channels (ติดตั้ง plugin เพิ่ม)
+| Channel | Plugin | ติดตั้ง |
+|---------|--------|--------|
+| **Microsoft Teams** | `@openclaw/msteams` | `openclaw plugins install msteams` |
+| **Matrix** | `@openclaw/matrix` | `openclaw plugins install matrix` |
+| **Mattermost** | `@openclaw/mattermost` | `openclaw plugins install mattermost` |
+| **Feishu (Lark)** | `@openclaw/feishu` | `openclaw plugins install feishu` |
+| **Zalo** | `@openclaw/zalo` | `openclaw plugins install zalo` |
+| **Twitch** | `@openclaw/twitch` | `openclaw plugins install twitch` |
+| **Bluesky** | `@openclaw/bluesky` | `openclaw plugins install bluesky` |
+| **Nostr** | `@openclaw/nostr` | `openclaw plugins install nostr` |
+| **Nextcloud Talk** | `@openclaw/nextcloud-talk` | `openclaw plugins install nextcloud-talk` |
+| **Synology Chat** | `@openclaw/synology-chat` | `openclaw plugins install synology-chat` |
+| **Tlon** | `@openclaw/tlon` | `openclaw plugins install tlon` |
+
+---
+
+## AI Model Providers (เปิดเพิ่มได้)
+
+### ปัจจุบันใช้: OpenRouter (routing ไปหลาย provider)
+
+### เพิ่ม Direct Provider ได้
+| Provider | Config key | ต้องการ |
+|----------|-----------|--------|
+| **Anthropic** (direct) | `models.providers.anthropic` | `ANTHROPIC_API_KEY` |
+| **OpenAI** (direct) | `models.providers.openai` | `OPENAI_API_KEY` |
+| **Google Gemini** | `models.providers.google` | `GEMINI_API_KEY` |
+| **Mistral** | `models.providers.mistral` | `MISTRAL_API_KEY` |
+| **Together AI** | `models.providers.together` | `TOGETHER_API_KEY` |
+| **Ollama** (local) | `models.providers.ollama` | ✅ มีอยู่แล้ว (Ryzen worker) |
+| **vLLM** (local) | `models.providers.vllm` | vLLM server running |
+| **Amazon Bedrock** | `models.providers.bedrock` | AWS credentials |
+| **NVIDIA** | `models.providers.nvidia` | NVIDIA API key |
+| **Hugging Face** | `models.providers.huggingface` | HF Inference API token |
+
+### Embedding Providers (สำหรับ Memory system)
+| Provider | ข้อดี | ราคา |
+|----------|------|------|
+| Ollama `nomic-embed-text` | ✅ config แล้ว, ฟรี | ฟรี (local) |
+| OpenAI `text-embedding-3-small` | เร็ว, แม่น | $0.02/1M tokens |
+| Gemini `text-embedding-004` | ฟรี tier สูง | ฟรี (มี quota) |
+| Voyage `voyage-3` | แม่นสุดสำหรับ code | $0.06/1M tokens |
+
+---
+
+## Mobile & Desktop Nodes (เปิดเพิ่มได้)
+
+| Node | ความสามารถ | วิธีเปิด |
+|------|-----------|---------|
+| **iOS App** | กล้อง, หน้าจอ, location, voice, Canvas | ติดตั้ง OpenClaw iOS แล้ว pair กับ gateway |
+| **Android App** | กล้อง, หน้าจอ, SMS, contacts, photos | ติดตั้ง OpenClaw Android แล้ว pair |
+| **macOS App** | Menu bar, Canvas, system.run, screen record | ติดตั้ง OpenClaw.app |
+| **Remote Node Host** | รัน commands บนเครื่องอื่น | `openclaw node host` บนเครื่องเป้าหมาย |
+
+### Device Pairing
+```bash
+# บน gateway server
+openclaw devices list
+openclaw devices approve <device-id>
+
+# บน node/app
+# Scan QR code หรือใส่ pairing token
+```
+
+---
+
+## Automation & Scheduling
+
+### Cron Jobs (✅ เปิดแล้ว)
+```bash
+# สร้าง recurring job
+openclaw cron add --name "morning-brief" --cron "0 7 * * *" --tz "Asia/Bangkok" \
+  --message "สรุปสิ่งที่เกิดขึ้นเมื่อคืน" --session isolated
+
+# สร้าง one-shot job
+openclaw cron add --name "reminder" --at "2026-03-15T09:00:00+07:00" \
+  --message "ประชุม 10 โมง"
+
+# จัดการ jobs
+openclaw cron list
+openclaw cron enable <jobId>
+openclaw cron disable <jobId>
+openclaw cron delete <jobId>
+```
+
+### Webhooks (เปิดเพิ่มได้)
+```json
+// เพิ่มใน openclaw.json
+"webhooks": {
+  "enabled": true,
+  "endpoints": [
+    {
+      "path": "/hook/github",
+      "secret": "webhook-secret",
+      "agentId": "sunday",
+      "message": "GitHub event received: {{body}}"
+    }
+  ]
+}
+```
+
+---
+
+## Browser Automation (✅ เปิดแล้ว)
+
+### ความสามารถ
+- เปิด URL, navigate, click, type
+- Screenshot หน้าเว็บ
+- กรอกฟอร์ม, login อัตโนมัติ
+- อ่านเนื้อหาเว็บ (scraping)
+- รัน JavaScript บนหน้าเว็บ
+- Download ไฟล์
+
+### Browser Profiles (เพิ่มเติม)
+```json
+// เพิ่มใน openclaw.json > browser
+"profiles": {
+  "openclaw": { "cdpPort": 9222 },
+  "login-persistent": {
+    "cdpPort": 9223,
+    "comment": "เก็บ login session ไว้ใช้ซ้ำ"
+  }
+}
+```
+
+---
+
+## Memory System (✅ เปิดแล้ว)
+
+### สถานะปัจจุบัน
+- **Provider:** Local (node-llama-cpp, `nomic-embed-text-v1.5.Q4_K_M.gguf`)
+- **Model cache:** `~/.openclaw/models/` (ดาวน์โหลดอัตโนมัติจาก HuggingFace ครั้งแรก ~90MB)
+- **Backend:** sqlite-vec (auto)
+- **Search:** Hybrid (BM25 + vector, 0.6/0.4 weight)
+
+### ข้อควรรู้
+- ครั้งแรกที่ memory search ถูกเรียก gateway จะดาวน์โหลด model ~90MB อัตโนมัติ
+- รันบนเครื่อง server โดยตรง ไม่ต้องการ API key ใดเลย
+- ใช้ RAM ขณะรัน ~200-400MB (server มี 10GB available)
+- เปลี่ยน provider ได้ทุกเมื่อ (เช่น ย้ายไป Gemini embedding เมื่อมี API key)
+
+### อัปเกรดในอนาคต
+```json
+// เปลี่ยนเป็น OpenAI embeddings (แม่นกว่า, ต้องมี key)
+"memorySearch": {
+  "provider": "openai",
+  "model": "text-embedding-3-small"
+}
+```
+
+---
+
+## Skills System (เปิดเพิ่มได้)
+
+### ClawHub — Skills Registry
+```bash
+# ค้นหา skills
+openclaw skills search "pdf"
+openclaw skills search "code review"
+
+# ติดตั้ง
+openclaw skills install <skill-name>
+
+# จัดการ
+openclaw skills list
+openclaw skills remove <skill-name>
+```
+
+### 40+ Built-in Skills (พร้อมใช้)
+รวมถึง: coding assistant, media processing, system admin, web research, document analysis ฯลฯ
+
+---
+
+## Security & Access Control (เปิดเพิ่มได้)
+
+| Feature | Config | ใช้เมื่อ |
+|---------|--------|---------|
+| **DM Pairing** | `channels.<ch>.dmPolicy: "pairing"` | อนุมัติผู้ใช้ใหม่ก่อนคุยได้ |
+| **DM Allowlist** | `channels.<ch>.dmAllowlist: [...]` | จำกัดเฉพาะ user ที่ระบุ |
+| **Group Mention** | `channels.<ch>.groupPolicy: "mention"` | ตอบเฉพาะเมื่อถูก mention |
+| **Tool Sandbox** | `agents.defaults.sandbox.mode: "all"` | จำกัดสิทธิ์ tool |
+| **Device Pairing** | `security.devicePairing: true` | อนุมัติ device ก่อนเชื่อมต่อ |
+
+---
+
+## Advanced Features (เปิดเพิ่มได้)
+
+### Session Scoping
+```json
+// แยก context ตาม user
+"session": {
+  "dmScope": "per-peer"           // แต่ละ user มี session แยก
+  // หรือ "per-channel-peer"      // แยกตาม channel + user
+}
+```
+
+### Link Understanding (Web Scraping)
+```json
+// เพิ่มใน openclaw.json
+"linkUnderstanding": {
+  "enabled": true,
+  "firecrawl": {                  // optional: ใช้ Firecrawl API
+    "apiKey": "fc-..."
+  }
+}
+```
+
+### Voice & TTS
+- **TTS:** edge-tts (ฟรี), OpenAI TTS (มีค่าใช้จ่าย)
+- **STT:** Deepgram, OpenAI Whisper
+- **Voice Call:** `@openclaw/voice-call` plugin
+
+### Canvas (Rich UI)
+- Interactive drawing/rendering surface
+- ใช้กับ macOS app, iOS, Android nodes
+- `openclaw config set canvas.enabled true`
+
+### HTTP API Endpoints
+```json
+// เปิด OpenAI-compatible API
+"gateway": {
+  "http": {
+    "endpoints": {
+      "chatCompletions": { "enabled": true },
+      "responses": { "enabled": true }
+    }
+  }
+}
+```
+ใช้ได้กับ tools ที่รองรับ OpenAI API format (เช่น Cursor, Continue, Open WebUI)
+
+### Tailscale Funnel (เปิดเว็บสาธารณะ)
+```json
+"gateway": {
+  "tailscale": {
+    "mode": "funnel"    // เปลี่ยนจาก "serve" เป็น "funnel"
+  }
+}
+```
+เปิด gateway ให้เข้าถึงจาก internet ผ่าน Tailscale Funnel
+
+---
+
+## Observability (เปิดเพิ่มได้)
+
+| Feature | วิธีเปิด |
+|---------|---------|
+| **OpenTelemetry** | `openclaw plugins install diagnostics-otel` |
+| **Token tracking** | `openclaw status --tokens` (built-in) |
+| **Structured logs** | `openclaw logs --json` |
+| **Health monitoring** | `scripts/ops/health-check.sh` (✅ มีแล้ว) |
+
+---
+
+## Quick Reference: CLI Commands
+
+```bash
+# System
+openclaw status              # สถานะระบบ
+openclaw doctor              # วินิจฉัยและซ่อม
+openclaw health              # health probe
+openclaw logs                # ดู logs
+
+# Channels
+openclaw channels status     # สถานะ channels ทั้งหมด
+openclaw channels login <ch> # เข้าสู่ระบบ channel ใหม่
+
+# Agents
+openclaw agents list         # รายชื่อ agents
+openclaw agents add <id>     # เพิ่ม agent
+openclaw agents bind <id>    # ผูก agent กับ channel
+
+# Sessions
+openclaw sessions list       # รายการ sessions
+openclaw sessions send       # ส่งข้อความ
+
+# Config
+openclaw config get <key>    # อ่าน config
+openclaw config set <key> <val>  # เขียน config
+openclaw configure           # interactive wizard
+
+# Plugins
+openclaw plugins list        # รายการ plugins
+openclaw plugins install <p> # ติดตั้ง plugin
+
+# Memory
+openclaw memory search <q>   # ค้นหา memory
+openclaw memory list         # รายการ embeddings
+
+# Devices
+openclaw devices list        # รายการ devices
+openclaw devices approve <d> # อนุมัติ device
+
+# Browser
+openclaw browser open <url>  # เปิด URL
+openclaw browser screenshot  # ถ่ายหน้าจอ
+```
+
+---
+
+## Architecture Diagram
+
+```
+                    ┌─────────────┐
+                    │   You (Jame) │
+                    └──────┬──────┘
+                           │
+              ┌────────────┼────────────┐
+              │            │            │
+         Telegram     Web UI      CLI/SSH
+              │            │            │
+              └────────────┼────────────┘
+                           │
+                    ┌──────▼──────┐
+                    │   Gateway    │
+                    │  (port 18789)│
+                    └──────┬──────┘
+                           │
+              ┌────────────┼────────────┐
+              │            │            │
+         ┌────▼────┐ ┌────▼────┐ ┌────▼────┐
+         │ Sunday  │ │ Memory  │ │ Browser │
+         │ (agent) │ │ (embed) │ │ (Play.) │
+         └────┬────┘ └─────────┘ └─────────┘
+              │
+         ┌────▼────┐
+         │Sub-Agent│ (ephemeral, on-demand)
+         │gpt-5.2  │
+         │or opus  │
+         └─────────┘
+```

@@ -1,4 +1,65 @@
-# Repository Guidelines
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Architecture Overview
+
+OpenClaw is a **personal AI assistant gateway** — a single-user, multi-channel messaging hub. The Gateway is the control plane that receives messages from connected channels (WhatsApp, Telegram, Slack, Discord, Signal, iMessage, etc.), routes them through AI models, and delivers responses back.
+
+**Core flow:** Incoming message → Channel adapter (`src/telegram`, `src/discord`, `src/slack`, etc.) → Routing (`src/routing`) → AI provider → Response delivery back to channel.
+
+**Key architectural layers:**
+
+- **CLI** (`src/cli`, `src/commands`): Commander-based CLI with `@clack/prompts` for interactive flows. Entry point: `openclaw.mjs`.
+- **Gateway** (`src/gateway`): HTTP server (Express) that runs the assistant. Manages sessions, channels, and agent orchestration.
+- **Channels** (`src/telegram`, `src/discord`, `src/slack`, `src/signal`, `src/imessage`, `src/web`, `src/line`): Built-in messaging adapters.
+- **Extensions** (`extensions/*`): Workspace packages for additional channels (msteams, matrix, zalo, feishu, googlechat, irc, etc.) and features (memory, voice-call, llm-task).
+- **Plugin SDK** (`src/plugin-sdk`): Exported API surface for extensions. Each channel/feature gets its own sub-export (`openclaw/plugin-sdk/telegram`, etc.).
+- **Agents** (`src/agents`): Multi-agent system where agents have workspaces with SOUL.md, TOOLS.md, IDENTITY.md files.
+- **Infra** (`src/infra`): Shared utilities — events bus (`events.ts`), time formatting (`format-time`), etc.
+- **Media** (`src/media`, `src/media-understanding`): Media processing and understanding pipeline.
+- **Terminal UI** (`src/terminal`, `src/tui`): CLI output, table rendering (`table.ts`), theme/palette (`theme.ts`, `palette.ts`).
+- **Native apps** (`apps/macos`, `apps/ios`, `apps/android`): Platform-specific clients that connect to the gateway.
+
+**Source of truth files:** `ANTIGRAVITY.md` contains full architecture, agent registry, config, and runbooks. `.antigravityrules` contains agent validation rules. Always read these before broad system/config changes.
+
+## Quick Reference Commands
+
+```bash
+# Install
+pnpm install                              # install deps (bun install also works)
+
+# Build & check
+pnpm build                                # tsdown → dist/
+pnpm check                                # format + typecheck + lint (all-in-one)
+pnpm tsgo                                 # typecheck only
+pnpm format:fix                           # oxfmt --write
+pnpm lint:fix                             # oxlint --fix + format
+
+# Test
+pnpm test                                 # full suite (vitest via test-parallel.mjs)
+pnpm test:fast                            # unit tests only, no orchestration overhead
+vitest run path/to/file.test.ts           # single test file
+pnpm test:watch                           # interactive watcher
+pnpm test:coverage                        # with V8 coverage
+
+# Dev
+pnpm openclaw ...                         # run CLI in dev mode (uses bun)
+pnpm dev                                  # alias for dev run
+
+# Commit (prefer the project script over manual git add/commit)
+scripts/committer '<msg>' <file...>
+```
+
+**Runtime:** Node 22+ required. Prefer Bun for TS execution (`bun <file.ts>`). Node for production `dist/*`.
+
+## Model Routing (from Cursor rules)
+
+- All cloud model strings MUST be prefixed with `openrouter/` (e.g., `openrouter/anthropic/claude-sonnet-4.6`). No bare `anthropic/...` or `openai/...`.
+- Reference `ANTIGRAVITY.md §8 (ROUTING_MODELS)` for model tier assignments.
+- Config changes: use `openclaw config set ...` or `openclaw agents set-identity ...` — never overwrite `openclaw.json` manually.
+
+## Repository Guidelines
 
 - Repo: https://github.com/openclaw/openclaw
 - In chat replies, file references must be repo-root relative only (example: `extensions/bluebubbles/src/channel.ts:80`); never absolute paths or `~/...`.
