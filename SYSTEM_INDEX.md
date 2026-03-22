@@ -6,7 +6,7 @@
 
 | id     | role                             | model            | tools                                                              |
 | ------ | -------------------------------- | ---------------- | ------------------------------------------------------------------ |
-| sunday | Telegram secretary / task router | gemini-2.5-flash | read, exec, write, browser, sessions*\*, session_status, memory*\* |
+| sunday | Telegram secretary / task router | gemini-2.5-flash | read, exec, write, browser, sessions_\*, session_status, memory_\* |
 
 ## Find Information Here
 
