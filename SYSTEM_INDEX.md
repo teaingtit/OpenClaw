@@ -4,9 +4,9 @@
 
 ## Agents (id | role | model | tools)
 
-| id     | role                             | model            | tools                                                                         |
-| ------ | -------------------------------- | ---------------- | ----------------------------------------------------------------------------- |
-| sunday | Telegram secretary / task router | gemini-2.5-flash | read, exec, write, browser, sessions_\*, session_status, memory_\*, worker_\* |
+| id     | role                             | model            | tools                                                              |
+| ------ | -------------------------------- | ---------------- | ------------------------------------------------------------------ |
+| sunday | Telegram secretary / task router | gemini-2.5-flash | read, exec, write, browser, sessions_\*, session_status, memory_\* |
 
 ## Find Information Here
 
