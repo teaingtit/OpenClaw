@@ -30,6 +30,8 @@ FIX_ARGS="${OPENCLAW_FIX_ARGS:---no-notify}"
 POST_FIX_SLEEP="${OPENCLAW_POST_FIX_SLEEP:-15}"
 STATE_DIR="${OPENCLAW_STATE_DIR:-$HOME/.openclaw}"
 PENDING_FILE="$STATE_DIR/health-escalation-pending.json"
+COOLDOWN_FILE="$STATE_DIR/health-fix-last-run"
+FIX_COOLDOWN_SECS="${OPENCLAW_FIX_COOLDOWN:-3600}"  # 1 hour cooldown between gateway restarts
 RUN_FIX=true
 VERBOSE=false
 
@@ -66,13 +68,30 @@ if [ "$status" = "ok" ]; then
   exit 0
 fi
 
-# --- 3) ไม่ ok → รันสคริปต์แก้ (ถ้าเปิดอยู่) ---
+# --- 3) ไม่ ok → รันสคริปต์แก้ (ถ้าเปิดอยู่ + ผ่าน cooldown) ---
 if [ "$RUN_FIX" = true ] && [ -x "$FIX_SCRIPT" ]; then
-  if [ "$VERBOSE" = true ]; then
-    echo "Running fix script: $FIX_SCRIPT $FIX_ARGS"
+  # Cooldown: skip fix if last fix was within FIX_COOLDOWN_SECS
+  now_epoch=$(date +%s)
+  last_fix_epoch=0
+  if [ -f "$COOLDOWN_FILE" ]; then
+    last_fix_epoch=$(cat "$COOLDOWN_FILE" 2>/dev/null || echo 0)
+    [[ "$last_fix_epoch" =~ ^[0-9]+$ ]] || last_fix_epoch=0
   fi
-  "$FIX_SCRIPT" $FIX_ARGS >/dev/null 2>&1 || true
-  sleep "$POST_FIX_SLEEP"
+  elapsed=$(( now_epoch - last_fix_epoch ))
+
+  if [ "$elapsed" -ge "$FIX_COOLDOWN_SECS" ]; then
+    if [ "$VERBOSE" = true ]; then
+      echo "Running fix script: $FIX_SCRIPT $FIX_ARGS (cooldown ${elapsed}s >= ${FIX_COOLDOWN_SECS}s)"
+    fi
+    echo "$now_epoch" > "$COOLDOWN_FILE"
+    "$FIX_SCRIPT" $FIX_ARGS >/dev/null 2>&1 || true
+    sleep "$POST_FIX_SLEEP"
+  else
+    remaining=$(( FIX_COOLDOWN_SECS - elapsed ))
+    if [ "$VERBOSE" = true ]; then
+      echo "Skipping fix: cooldown active (${remaining}s remaining)"
+    fi
+  fi
 fi
 
 # --- 4) ตรวจซ้ำ ---

@@ -23,12 +23,12 @@ for arg in "$@"; do
 done
 
 if [ ! -f "$CONFIG" ]; then
-  printf '{"status":"error","error":"config not found","agents_count":0,"changes":0}\n'
+  printf '{"status":"error","error":"config not found","agents_count":0,"changes":0}\\n'
   exit 2
 fi
 
 if [ ! -f "$INDEX_FILE" ]; then
-  printf '{"status":"error","error":"SYSTEM_INDEX.md not found","agents_count":0,"changes":0}\n'
+  printf '{"status":"error","error":"SYSTEM_INDEX.md not found","agents_count":0,"changes":0}\\n'
   exit 2
 fi
 
@@ -197,10 +197,10 @@ PYEOF
 # --commit: stage and commit SYSTEM_INDEX.md when drift was fixed
 if [ "$python_exit" = "1" ] && [ "$COMMIT" = "1" ]; then
   git -C "$REPO_ROOT" add -- "$INDEX_FILE" 2>/dev/null || true
-  OPENCLAW_MACHINE_COMMIT=1 git -C "$REPO_ROOT" \
-    -c user.name="sot-sync" \
-    -c user.email="sot-sync@local" \
-    commit -m "sot-sync: update agent table from openclaw.json" \
+  OPENCLAW_MACHINE_COMMIT=1 git -C "$REPO_ROOT" \\
+    -c user.name="sot-sync" \\
+    -c user.email="sot-sync@local" \\
+    commit -m "sot-sync: update agent table from openclaw.json" \\
     2>/dev/null || true
 fi
 
